@@ -1,4 +1,4 @@
-module Top(
+module Top_ (
 	input        i_clk,
 	input        i_rst_n,
 	input        i_start,

@@ -5,15 +5,25 @@ module Top(
 	output [3:0] o_random_out
 );
 
+
+parameter FREQ = 50000000;
+localparam CYCLE = FREQ/5;   
+
+
 // ===== States =====
 parameter S_IDLE = 1'b0;
 parameter S_PROC = 1'b1;
 
 // ===== Output Buffers =====
+
+
 logic [3:0] o_random_out_r, o_random_out_w;
+
 
 // ===== Registers & Wires =====
 logic state_r, state_w;
+logic [63:0] counter_r, counter_w;
+
 
 // ===== Output Assignments =====
 assign o_random_out = o_random_out_r;
@@ -23,6 +33,8 @@ always_comb begin
 	// Default Values
 	o_random_out_w = o_random_out_r;
 	state_w        = state_r;
+	counter_w      = (counter_r == CYCLE) ? 64'd0 : counter_r + 64'd1;
+
 
 	// FSM
 	case(state_r)
@@ -34,7 +46,7 @@ always_comb begin
 	end
 
 	S_PROC: begin
-		if (i_start) begin
+		if (counter_r == CYCLE) begin
 			state_w = (o_random_out_r == 4'd10) ? S_IDLE : state_w;
 			o_random_out_w = (o_random_out_r == 4'd10) ? 4'd1 : (o_random_out_r - 4'd1);
 		end
@@ -49,10 +61,12 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
 	if (!i_rst_n) begin
 		o_random_out_r <= 4'd0;
 		state_r        <= S_IDLE;
+		counter_r      <= 64'd0;
 	end
 	else begin
 		o_random_out_r <= o_random_out_w;
 		state_r        <= state_w;
+		counter_r      <= counter_w;
 	end
 end
 

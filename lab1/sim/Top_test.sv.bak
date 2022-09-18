@@ -1,6 +1,6 @@
 `timescale 1us/1us
 `define FAST_SIM
-`include "..\include\LAB1_include.sv"
+`include "LAB1_include.sv"
 
 module Top_test;
 
@@ -14,7 +14,7 @@ initial begin
 	$fsdbDumpvars(0, Top_test, "+mda");
 	i_clk = 0;
 	#1 $NicotbInit();
-	#30000;
+	#120000000;
 	$NicotbFinal();
 	$finish;
 end
