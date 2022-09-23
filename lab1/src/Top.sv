@@ -2,7 +2,9 @@ module Top(
 	input        i_clk,
 	input        i_rst_n,
 	input        i_start,
-	output [3:0] o_random_out
+    input        i_start_2,
+	output [3:0] o_random_out,
+    output [3:0] o_random_out_2
 );
 
 // ===== States =====
@@ -18,6 +20,7 @@ localparam CYCLE = FREQ/50;
 
 // ===== Output Buffers =====
 logic [3:0] o_random_out_r, o_random_out_w;
+logic [3:0] o_random_out_2_r, o_random_out_2_w;
 
 // ===== Registers & Wires =====
 logic [63:0] counter_r, counter_w;
@@ -29,11 +32,19 @@ logic [7:0] PERIOD_r, PERIOD_w;
 logic [7:0] DNUM_r, DNUM_w;
 
 // ===== Output Assignments =====
-assign o_random_out = o_random_out_r;
+assign o_random_out   = o_random_out_r;
+assign o_random_out_2 = o_random_out_2_r;
 
 
 
 // ===== Combinational Circuits =====
+
+always_comb begin // o_random_out_2
+    // if (i_start_2) o_random_out_2_w = (o_random_out_2_r == 4'b1111) ? 4'd0 : o_random_out_2_r + 4'd1;
+    if (i_start_2) o_random_out_2_w = o_random_out_r;
+    else o_random_out_2_w = o_random_out_2_r;
+end
+
 always_comb begin // counter
     if (i_start) counter_w = 64'd0;
     else counter_w = (counter_r == CYCLE-1) ? 64'd0 : counter_r + 64'd1;
@@ -184,17 +195,19 @@ end
 always_ff @(posedge i_clk or negedge i_rst_n) begin
 	// reset
 	if (!i_rst_n) begin
-		o_random_out_r <= 4'd0;
-		state_r        <= S_IDLE;
-        counter_r      <= 64'd0;
-        LFSR_r         <= 4'd0;
-        P_counter_r    <= 8'd0;
-        D_counter_r    <= 8'd0;
-        PERIOD_r       <= 8'd0;
-        DNUM_r         <= 8'd0;
+		o_random_out_r   <= 4'd0;
+        o_random_out_2_r <= 4'd0;
+		state_r          <= S_IDLE;
+        counter_r        <= 64'd0;
+        LFSR_r           <= 4'd0;
+        P_counter_r      <= 8'd0;
+        D_counter_r      <= 8'd0;
+        PERIOD_r         <= 8'd0;
+        DNUM_r           <= 8'd0;
 	end
 	else begin
 		o_random_out_r <= o_random_out_w;
+        o_random_out_2_r <= o_random_out_2_w;
 		state_r        <= state_w;
         counter_r      <= counter_w;
         LFSR_r         <= LFSR_w;
