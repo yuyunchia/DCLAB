@@ -60,9 +60,9 @@ def RSA256MONT(N, y, d):
 
 
 
-N = 1731
-a = 97
-b = 57
+N = 7
+a = 2
+b = 4
 k = len(bin(a))-2
 # ans = MP(N, a, b, k)
 # ans2 = MA(N, a, b, k)
@@ -76,7 +76,15 @@ if N < t in MP , cause loop
 if N is even, cause false
 
 """
+
 """
+
+
+MA(N, a, b)  = (   7,  3,  5 ) => 4
+MA(N, a, b)  = (   7,  2,  4 ) => 4
+MA(N, a, b)  = (1731, 97, 57 ) => 1227
+
+
 # (N, y ,d ) = (6 , 7 , 5) wrong
 # (N, y ,d ) = (8 , 7 , 5) wrong
 # (N, y ,d ) = (10 , 7 , 5) wrong
