@@ -28,6 +28,7 @@ logic [8:0] M_counter_r, M_counter_w;
 logic [8:0] MP_counter_r, MP_counter_w;
 logic [255:0] MP_temp_r, MP_temp_w; 	// parameter in ModuloProduct
 logic [255:0] MP_r, MP_w; 				// output for ModuloProduct
+logic [255:0] t_r, t_w; 				
 logic [2:0] state_r, state_w;
 
 logic MA_start_r, MA_start_w; 			// Montgomery Algorithm parameter
@@ -118,6 +119,26 @@ always_comb begin //state
 	endcase
 end
 
+always_comb begin // t
+	case(state_r)
+		S_IDLE: begin
+			t_w = 256'd0;
+		end
+
+		S_PREP: begin
+			t_w = (MP_counter_r == BIT) ? MP_r : t_r;
+		end
+
+		S_CALC: begin
+			if(M_counter_r < BIT && MA_end == 1'b1) t_w = MA_o;
+			else t_w = t_r;
+		end 
+
+		default: t_w = t_r;
+	endcase
+
+end
+
 always_comb begin //o_finished
 	case(state_r)
 		S_IDLE: begin
@@ -202,16 +223,13 @@ always_comb begin //Montgomery Algorithm
 
 				if(MA_end == 1'b1) begin
 					MA_start_w = 1'b0;
-					MP_w = MA_o;
 				end
 				else begin
 					MA_start_w = MA_start_r;
-					MP_w = MP_r;
 				end
 			end
 
 			else begin
-				MP_w = MP_r;
 				MA_start_w = MA_start_r;
 				MA_a_w = MA_a_r;
 				MA_b_w = MA_b_r;
@@ -220,7 +238,6 @@ always_comb begin //Montgomery Algorithm
 
 		default: begin
 			o_a_pow_d_w = o_a_pow_d_r;
-			MP_w = MP_r;
 			MA_start_w = MA_start_r;
 			MA_a_w = MA_a_r;
 			MA_b_w = MA_b_r;
@@ -276,7 +293,7 @@ localparam S_LODD = 3'd2;
 localparam S_LSFT = 3'd3;
 localparam S_POST = 3'd4;
 
-localparam BIT = 9'd256;
+localparam BIT = 9'd255;
 logic [255:0] o_MA_r, o_MA_w;
 logic o_MA_end_r, o_MA_end_w;
 logic [9:0] counter_r, counter_w;
