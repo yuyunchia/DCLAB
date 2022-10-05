@@ -259,6 +259,7 @@ always_ff @(posedge i_clk or negedge i_rst) begin
 		MA_start_r 		<= 256'b0;
 		MA_a_r			<= 256'b0;
 		MA_b_r 			<= 256'b0;
+		t_r 			<= 256'b0;
 	end
 	else begin
 		state_r 		<= state_w;
@@ -271,6 +272,7 @@ always_ff @(posedge i_clk or negedge i_rst) begin
 		MA_start_r 		<= MA_start_w;
 		MA_a_r			<= MA_a_w;
 		MA_b_r 			<= MA_b_w;
+		t_r 			<= t_w;
 	end 
 end
 endmodule
