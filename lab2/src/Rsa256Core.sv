@@ -137,7 +137,7 @@ always_comb begin //ModuloProduct
 	case(state_r)
 		S_IDLE: begin
 			MP_temp_w = i_a;
-			MP_w = 256'b0;
+			MP_w = 256'd0;
 		end
 
 		S_PREP: begin // create i_a * 2^256
@@ -165,9 +165,11 @@ always_comb begin //Montgomery Algorithm
 			o_a_pow_d_w = 256'b1;
 			MA_a_w = 256'd0;
 			MA_b_w = 256'd0;
+			MP_w   = 256'd0 ;
 		end
 
 		S_MONT: begin
+			MP_w = MP_r;
 			if(M_counter_r < BIT) begin
 				if(i_d[M_counter_r] == 1'b1) begin
 					MA_a_w = o_a_pow_d_r;

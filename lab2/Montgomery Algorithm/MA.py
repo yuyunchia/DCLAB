@@ -19,7 +19,7 @@ def MP(N, a, b, k): # Modulo Product
         
     return m
 
-def MA(N, a, b):
+def MA(N, a, b): # MontAlg
     m = 0
     for i in range(256):
         if (a%2 == 1):
