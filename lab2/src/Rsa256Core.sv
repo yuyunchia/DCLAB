@@ -23,7 +23,7 @@ logic [255:0] o_a_pow_d_r, o_a_pow_d_w;
 logic o_finished_r, o_finished_w;
 
 // ===== Parameters =====
-localparam BIT = 9'd256;
+localparam BIT = 9'd255;
 logic [8:0] M_counter_r, M_counter_w;
 logic [8:0] MP_counter_r, MP_counter_w;
 logic [255:0] MP_temp_r, MP_temp_w; 	// parameter in ModuloProduct
@@ -61,7 +61,7 @@ always_comb begin // M_counter
 		end
 
 		S_CALC: begin
-			M_counter_w = (M_counter_r < BIT) ? M_counter_r + 1 : M_counter_r; // 0~255
+			M_counter_w = (M_counter_r < BIT && MA_end == 1'd1) ? M_counter_r + 1 : M_counter_r; // 0~255
 		end
 
 		default: M_counter_w = M_counter_r;
@@ -100,7 +100,12 @@ always_comb begin //state
 
 		S_MONT: begin
 			if(i_start) state_w = S_PREP;
-			else state_w = (MA_end == 1) ? S_CALC : state_r;
+			else if (M_counter_r < BIT) begin
+				if (i_d[M_counter_r] == 1'b1 && MA_end == 1) state_w = S_CALC;
+				else if (i_d[M_counter_r] == 1'b0) state_w = S_CALC;
+				else state_w = state_r;
+			end
+			else state_w = state_r;
 		end
 
 		S_CALC: begin
@@ -158,7 +163,7 @@ always_comb begin //ModuloProduct
 	case(state_r)
 		S_IDLE: begin
 			MP_temp_w = i_a;
-			MP_w = 256'b0;
+			MP_w = 256'd0;
 		end
 
 		S_PREP: begin // create i_a * 2^256
@@ -190,19 +195,32 @@ always_comb begin //Montgomery Algorithm
 
 		S_MONT: begin
 			if(M_counter_r < BIT) begin
-				if(i_d[M_counter_r] == 1'b1) begin
-					MA_a_w = o_a_pow_d_r;
-					MA_b_w = MP_r;
-					MA_start_w = 1'b1;
-					
-					if(MA_end == 1'b1) begin
+				// if(i_d[M_counter_r] == 1'b1) begin
+				// 		MA_a_w = o_a_pow_d_r;  // MA_a = m
+				// 		MA_b_w = MP_r;         // MA_b = t
+				// 		MA_start_w = 1'b1;    
+						
+				// 		if(MA_end == 1'b1) begin
+				// 				MA_start_w = 1'b0;
+				// 				o_a_pow_d_w = MA_o;
+				// 		end
+				// 		else begin
+				// 				MA_start_w = MA_start_r;
+				// 				o_a_pow_d_w = o_a_pow_d_r;
+				// 		end
+				// end
+				if(MA_end == 1'b1) begin
 						MA_start_w = 1'b0;
-						o_a_pow_d_w = MA_o;
-					end
-					else begin
+				 	o_a_pow_d_w = MA_o;
+				end
+				else if (i_d[M_counter_r] == 1'b1) begin
+						MA_a_w = o_a_pow_d_r;
+						MA_b_w = MP_r;
+						MA_start_w = 1'b1;
+				end
+				else begin
 						MA_start_w = MA_start_r;
 						o_a_pow_d_w = o_a_pow_d_r;
-					end
 				end
 				
 			end
@@ -216,23 +234,33 @@ always_comb begin //Montgomery Algorithm
 		end
 
 		S_CALC: begin
-			if(M_counter_r < BIT) begin
-				MA_a_w = MP_r;
-				MA_b_w = MP_r;
-				MA_start_w = 1'b1;
+			// if(M_counter_r < BIT) begin
+			// 		MA_a_w = MP_r;
+			// 		MA_b_w = MP_r;
+			// 		MA_start_w = 1'b1;
 
-				if(MA_end == 1'b1) begin
+			// 	if(MA_end == 1'b1) begin
+			// 		MA_start_w = 1'b0;
+			// 	end
+			// 	else begin
+			// 		MA_start_w = MA_start_r;
+			// 	end
+			// end
+			// else begin
+			// 		MA_start_w = MA_start_r;
+			// 		MA_a_w = MA_a_r;
+			// 		MA_b_w = MA_b_r;
+			// end
+			if(MA_end == 1'b1) begin
 					MA_start_w = 1'b0;
-				end
-				else begin
-					MA_start_w = MA_start_r;
-				end
 			end
-
+			else if (M_counter_r < BIT) begin
+					MA_a_w = MP_r;
+					MA_b_w = MP_r;
+					MA_start_w = 1'b1;
+			end
 			else begin
-				MA_start_w = MA_start_r;
-				MA_a_w = MA_a_r;
-				MA_b_w = MA_b_r;
+					MA_start_w = MA_start_r;
 			end
 		end
 
@@ -247,7 +275,7 @@ always_comb begin //Montgomery Algorithm
 end
 
 // ===== Sequential Circuits =====
-always_ff @(posedge i_clk or negedge i_rst) begin
+always_ff @(posedge i_clk or posedge i_rst) begin
 	if(i_rst) begin
 		state_r 		<= S_IDLE;
 		o_a_pow_d_r 	<= 256'b1;
@@ -329,7 +357,8 @@ always_comb begin //state
 		end
 
 		S_POST: begin
-			state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+			// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+			state_w = S_IDLE;
 		end
 
 		default: state_w = state_r;
@@ -393,7 +422,7 @@ end
 end*/
 
 // ===== Sequential Blocks =====
-always_ff @(posedge i_clk) begin
+always_ff @(posedge i_clk or posedge i_rst) begin
 	if(i_rst) begin
 		state_r 	<= S_IDLE;
 		o_MA_r 		<= 256'b0;

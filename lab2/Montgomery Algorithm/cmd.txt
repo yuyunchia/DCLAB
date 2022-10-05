@@ -6,9 +6,19 @@ ncverilog tb_Top.sv Top.sv +access+rw
 
 
 
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
+===========================================================
 ncverilog tb_MA.sv MA.sv +access+rw
 
 
 
 
+
+===========================================================
+ncverilog ./tb_verilog/tb.sv Rsa256Core.sv +access+rw
+
+
+
+
+
+===========================================================
+ncverilog tb.sv Rsa256Core.sv +access+r

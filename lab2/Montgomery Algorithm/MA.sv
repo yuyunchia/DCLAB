@@ -1,3 +1,4 @@
+
 module MontAlg(
 	input i_clk,
 	input i_rst,
@@ -5,25 +6,29 @@ module MontAlg(
 	input [255:0] i_n, 
 	input [255:0] i_MA_a, 
 	input [255:0] i_MA_b, 
-	output [255:0] o_MA_o,
+	output [255:0] o_MA,
 	output o_MA_end
 );
+
 localparam S_IDLE = 3'd0;
 localparam S_LONE = 3'd1;
 localparam S_LODD = 3'd2;
 localparam S_LSFT = 3'd3;
 localparam S_POST = 3'd4;
 
-localparam BIT = 9'd256;
-logic [255:0] o_MA_o_r, o_MA_o_w;
-logic         o_MA_end_r, o_MA_end_w;
-logic [9:0]   counter_r, counter_w;
-logic [2:0]   state_r, state_w;
-logic [255:0] i_MA_a_r, i_MA_a_w;
-logic [255:0] i_MA_b_r, i_MA_b_w;
+// localparam BIT = 9'd256;
+localparam BIT = 9'd255;
+logic [255:0] o_MA_r, o_MA_w;
+logic o_MA_end_r, o_MA_end_w;
+logic [9:0] counter_r, counter_w;
+logic [2:0] state_r, state_w;
+//local [255:0] MA_a_r, MA_a_w;
+//local [255:0] MA_b_r, MA_b_w;
 
-assign o_MA_o = o_MA_o_r;
+assign o_MA = o_MA_r;
 assign o_MA_end = o_MA_end_r;
+//assign MA_a_w = MA_a;
+//assign MA_b_w = MA_b;
 
 // ===== Combinational Blocks =====
 always_comb begin //state
@@ -63,32 +68,32 @@ always_comb begin //counter
 	endcase
 end
 
-always_comb begin //o_MA_o
+always_comb begin //MA_o
 	case (state_r)
-		S_IDLE: o_MA_o_w = 256'b0;
+		S_IDLE: o_MA_w = 256'b0;
 		S_LONE: begin
-			if(i_MA_a[counter_r] == 1'b1) o_MA_o_w = o_MA_o_r + i_MA_b;
-			else o_MA_o_w = o_MA_o_r;
+			if(i_MA_a[counter_r] == 1'b1) o_MA_w = o_MA_r + i_MA_b;
+			else o_MA_w = o_MA_r;
 		end
 
 		S_LODD: begin
-			if(o_MA_o_r[0] == 1'b1) o_MA_o_w = o_MA_o_r + i_n;
-			else o_MA_o_w = o_MA_o_r;
+			if(o_MA_r[0] == 1'b1) o_MA_w = o_MA_r + i_n;
+			else o_MA_w = o_MA_r;
 		end
 
 		S_LSFT: begin
-			o_MA_o_w = o_MA_o_r >> 1;
+			o_MA_w = o_MA_r >> 1;
 		end
 
 		S_POST: begin
-			o_MA_o_w = (o_MA_o_r >= i_n) ? o_MA_o_r - i_n : o_MA_o_r;
+			o_MA_w = (o_MA_r >= i_n) ? o_MA_r - i_n : o_MA_r;
 		end
 
-		default: o_MA_o_w = o_MA_o_r;
+		default: o_MA_w = o_MA_r;
 	endcase
 end
 
-always_comb begin //o_MA_end
+always_comb begin //MA_end
 	case(state_r)
 		S_IDLE: o_MA_end_w = 1'b0;
 		S_POST: o_MA_end_w = 1'b1;
@@ -96,43 +101,38 @@ always_comb begin //o_MA_end
 	endcase
 end
 
-always_comb begin //i_MA_a, i_MA_b
+/*always_comb begin //MA_a, MA_b
 	case(state_r)
 		S_IDLE: begin
-			i_MA_a_w = i_MA_a;
-			i_MA_b_w = i_MA_b;
+			MA_a_w = MA_a;
+			MA_b_w = MA_b;
 		end
 		default: begin
-			i_MA_a_w = i_MA_a_r;
-			i_MA_b_w = i_MA_b_r;
+			MA_a_w = MA_a_r;
+			MA_b_w = MA_b_r;
 		end
 	endcase
-end
+end*/
 
 // ===== Sequential Blocks =====
 always_ff @(posedge i_clk) begin
 	if(i_rst) begin
 		state_r 	<= S_IDLE;
-		o_MA_o_r 		<= 256'b0;
+		o_MA_r 		<= 256'b0;
 		o_MA_end_r 	<= 1'b0;
 		counter_r 	<= 9'b0;
-		i_MA_a_r 		<= i_MA_a;
-		i_MA_b_r 		<= i_MA_b;
+		//MA_a_r 		<= MA_a;
+		//MA_b_r 		<= MA_b;
 	end
 	else begin
 		state_r 	<= state_w;
-		o_MA_o_r 		<= o_MA_o_w;
+		o_MA_r 		<= o_MA_w;
 		o_MA_end_r 	<= o_MA_end_w;
 		counter_r 	<= counter_w;
-		i_MA_a_r 		<= i_MA_a_w;
-		i_MA_b_r 		<= i_MA_b_w;
+		//MA_a_r 		<= MA_a_w;
+		//MA_b_r 		<= MA_b_w;
 	end
 	
 end
 
 endmodule
-
-
-
-
-

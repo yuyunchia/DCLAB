@@ -24,7 +24,7 @@ module MA_tb;
 		.i_n(n),
 		.i_MA_a(MA_a),
 		.i_MA_b(MA_b),
-		.o_MA_o(MA_o),
+		.o_MA(MA_o),
 		.o_MA_end(MA_end)
 	);
     initial begin
@@ -40,16 +40,12 @@ module MA_tb;
 		rst = 0;
 		for (int i = 0; i < 3; i++) begin
             MA_start = 1'd1;
-            // MA_a = 256'd97;
-            // MA_b = 256'd57;
-			// n    = 256'd1731;
 			$fscanf(fp_MA_a, "%d\n", MA_a); 
 			$fscanf(fp_MA_b, "%d\n", MA_b); 
 			$fscanf(fp_n,    "%d\n", n); 
 			$fscanf(fp_MA_o, "%d\n", golden); 
-            for (int j = 0; j < 256; j++) begin
-				@(posedge clk);
-			end
+
+			@(posedge clk);
 			$display("=====================================");
 			$display("MA_a = %4d", MA_a);
 			$display("MA_b = %4d", MA_b);
@@ -57,7 +53,6 @@ module MA_tb;
 			$display("================");
 			MA_start <= 1;
 			@(posedge clk)
-			// encrypted_data <= 'x;
 			MA_start <= 0;
 			@(posedge MA_end)
 			$display("================");
