@@ -48,6 +48,7 @@ def EXSQ(N, y, d):
 
 def RSA256MONT(N, y, d):
     t = MP(N, 1<<256, y, 257) # t = y << 256
+    # t = MA(N, y, 1<<256) # t = y << 256
     m = 1
     for i in range(256):
         if d%2 == 1:
@@ -60,14 +61,14 @@ def RSA256MONT(N, y, d):
 
 
 
-N = 7
-a = 2
-b = 4
+N = 3901
+a = 722
+b = 722
 k = len(bin(a))-2
 # ans = MP(N, a, b, k)
 # ans2 = MA(N, a, b, k)
-y = 41
-d = 37
+y = 19
+d = 3
 
 
 """
@@ -104,7 +105,7 @@ print(f"MA(N, a, b<<256):    {MA(N, a, b<<256)}")
 print(f"MA(N, a<<256, b):    {MA(N, a<<256, b)}")
 print(f"MA(N, a, b):         {MA(N, a, b)}")
 print("=====================================")
-print(f"EXSQ(N, y, d):       {EXSQ(N, y, d)}")
-print(f"RSA256MONT(N, y, d): {RSA256MONT(N, y, d)}")
+print(f"EXSQ      (N={N}, y={y}, d={d}): {EXSQ(N, y, d)}")
+print(f"RSA256MONT(N={N}, y={y}, d={d}): {RSA256MONT(N, y, d)}")
 
 

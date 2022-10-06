@@ -85,3 +85,43 @@ if __name__ == '__main__':
             vals_new = map(lambda shamt: (msg_new>>shamt)&255, range((w_chunk_size-1)*8, -8, -8))
             vals_new = pack("{}B".format(w_chunk_size), *vals_new)
             stdout.write(vals_new)
+
+
+
+
+
+
+
+# a = 3
+# b = 5
+# n = 8
+
+# mul_naive(a, b, n)
+# print(f"mul_naive  (a={a}, b={b}, n={n}): {mul_naive(a, b, n)}")     # a*b mod n
+# print(f"power_naive(a={a}, b={b}, n={n}): {power_naive(a, b, n)}")   # a^b mod n
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

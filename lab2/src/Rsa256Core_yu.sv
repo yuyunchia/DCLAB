@@ -107,7 +107,6 @@ always_comb begin //state
 				else state_w = state_r;
 			end
 			else state_w = state_r;
-
 		end
 
 		S_CALC: begin
@@ -201,35 +200,21 @@ always_comb begin //Montgomery Algorithm
 
 		S_MONT: begin
 			if(M_counter_r < BIT) begin
-
-				// if(i_d[M_counter_r] == 1'b1) begin
-				// 		MA_a_w = o_a_pow_d_r;  // MA_a = m
-				// 		MA_b_w = MP_r;         // MA_b = t
-				// 		MA_start_w = 1'b1;    
-						
-				// 		if(MA_end == 1'b1) begin
-				// 				MA_start_w = 1'b0;
-				// 				o_a_pow_d_w = MA_o;
-				// 		end
-				// 		else begin
-				// 				MA_start_w = MA_start_r;
-				// 				o_a_pow_d_w = o_a_pow_d_r;
-				// 		end
-				// end
-
-				
 				if(MA_end == 1'b1) begin
 						MA_start_w = 1'b0;
 				 		o_a_pow_d_w = MA_o;
-						
+                        MA_a_w = 256'd0;
+			            MA_b_w = 256'd0;
 				end
 				else if (i_d[M_counter_r] == 1'b1) begin
 						MA_a_w = o_a_pow_d_r;
 						MA_b_w = MP_r;
 						MA_start_w = 1'b1;
-						
+                        o_a_pow_d_w = o_a_pow_d_r;
 				end
 				else begin
+                        MA_a_w = MA_a_r;
+                        MA_b_w = MA_b_r;
 						MA_start_w = MA_start_r;
 						o_a_pow_d_w = o_a_pow_d_r;
 				end
@@ -245,36 +230,24 @@ always_comb begin //Montgomery Algorithm
 		end
 
 		S_CALC: begin
-			// if(M_counter_r < BIT) begin
-			// 		MA_a_w = MP_r;
-			// 		MA_b_w = MP_r;
-			// 		MA_start_w = 1'b1;
-			// 	if(MA_end == 1'b1) begin
-			// 		MA_start_w = 1'b0;
-			// 	end
-			// 	else begin
-			// 		MA_start_w = MA_start_r;
-			// 	end
-			// end
-			// else begin
-			// 		MA_start_w = MA_start_r;
-			// 		MA_a_w = MA_a_r;
-			// 		MA_b_w = MA_b_r;
-			// end
-			
+		
 			if(MA_end == 1'b1) begin
 					MA_start_w = 1'b0;
-					o_a_pow_d_w = o_a_pow_d_r;
+                    o_a_pow_d_w = o_a_pow_d_r;
+                    MA_a_w = MA_a_r;
+                    MA_b_w = MA_b_r;
 			end
 			else if (M_counter_r < BIT) begin
+                    o_a_pow_d_w = o_a_pow_d_r;
 					MA_a_w = MP_r;
 					MA_b_w = MP_r;
 					MA_start_w = 1'b1;
-					o_a_pow_d_w = o_a_pow_d_r;
 			end
 			else begin
-					MA_start_w = MA_start_r;
-					o_a_pow_d_w = o_a_pow_d_r;
+                    o_a_pow_d_w = o_a_pow_d_r;
+                    MA_start_w = MA_start_r;
+                    MA_a_w = MA_a_r;
+                    MA_b_w = MA_b_r;
 			end
 		end
 
@@ -335,7 +308,6 @@ localparam S_IDLE = 3'd0;
 localparam S_LONE = 3'd1;
 localparam S_LODD = 3'd2;
 localparam S_LSFT = 3'd3;
-
 localparam S_POST = 3'd4;
 
 localparam BIT = 9'd255;
@@ -353,34 +325,31 @@ assign o_MA_end = o_MA_end_r;
 
 // ===== Combinational Blocks =====
 always_comb begin //state
-	if (i_MA_start == 1'd0) state_w  = S_IDLE;
-	else begin
-		case(state_r)
-			S_IDLE: begin
-				if(i_MA_start) state_w = S_LONE;
-				else state_w = state_r;
-			end
+	case(state_r)
+		S_IDLE: begin
+			if(i_MA_start) state_w = S_LONE;
+			else state_w = state_r;
+		end
 
-			S_LONE: begin
-				state_w = S_LODD;
-			end
+		S_LONE: begin
+			state_w = S_LODD;
+		end
 
-			S_LODD: begin
-				state_w = S_LSFT;
-			end
+		S_LODD: begin
+			state_w = S_LSFT;
+		end
 
-			S_LSFT: begin
-				state_w = (counter_r == BIT) ? S_POST : S_LONE;
-			end
+		S_LSFT: begin
+			state_w = (counter_r == BIT) ? S_POST : S_LONE;
+		end
 
-			S_POST: begin
-				// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
-				state_w = S_IDLE;
-			end
+		S_POST: begin
+			// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+			state_w = S_IDLE;
+		end
 
-			default: state_w = state_r;
-		endcase
-	end
+		default: state_w = state_r;
+	endcase
 end
 
 always_comb begin //counter
