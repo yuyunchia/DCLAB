@@ -102,7 +102,7 @@ always_comb begin //state
 		S_CALC: begin
 			if(i_start) state_w = S_PREP;
 			else begin
-				if(M_counter_r == BIT) state_w = S_IDLE;
+				if(o_finished_r == 1'b1) state_w = S_IDLE;
 				else if (MA_end == 1 && M_counter_r < BIT) state_w = S_MONT;
 				else state_w = state_r;
 			end
