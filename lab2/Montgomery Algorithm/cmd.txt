@@ -9,6 +9,8 @@ ncverilog tb_Top.sv Top.sv +access+rw
 ===========================================================
 ncverilog tb_MA.sv MA.sv +access+rw
 
+ncverilog tb_MP.sv MP.sv +access+rw
+
 
 
 

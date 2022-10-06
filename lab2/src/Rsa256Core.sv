@@ -350,134 +350,134 @@ module MontAlg(
 	output o_MA_end
 );
 
-localparam S_IDLE = 3'd0;
-localparam S_LONE = 3'd1;
-localparam S_LODD = 3'd2;
-localparam S_LSFT = 3'd3;
+		localparam S_IDLE = 3'd0;
+		localparam S_LONE = 3'd1;
+		localparam S_LODD = 3'd2;
+		localparam S_LSFT = 3'd3;
 
-localparam S_POST = 3'd4;
+		localparam S_POST = 3'd4;
 
-localparam BIT = 9'd255;
-logic [255:0] o_MA_r, o_MA_w;
-logic o_MA_end_r, o_MA_end_w;
-logic [9:0] counter_r, counter_w;
-logic [2:0] state_r, state_w;
-//local [255:0] MA_a_r, MA_a_w;
-//local [255:0] MA_b_r, MA_b_w;
+		localparam BIT = 9'd255;
+		logic [255:0] o_MA_r, o_MA_w;
+		logic o_MA_end_r, o_MA_end_w;
+		logic [9:0] counter_r, counter_w;
+		logic [2:0] state_r, state_w;
+		//local [255:0] MA_a_r, MA_a_w;
+		//local [255:0] MA_b_r, MA_b_w;
 
-assign o_MA = o_MA_r;
-assign o_MA_end = o_MA_end_r;
-//assign MA_a_w = MA_a;
-//assign MA_b_w = MA_b;
+		assign o_MA = o_MA_r;
+		assign o_MA_end = o_MA_end_r;
+		//assign MA_a_w = MA_a;
+		//assign MA_b_w = MA_b;
 
-// ===== Combinational Blocks =====
-always_comb begin //state
-	if (i_MA_start == 1'd0) state_w  = S_IDLE;
-	else begin
-		case(state_r)
-			S_IDLE: begin
-				if(i_MA_start) state_w = S_LONE;
-				else state_w = state_r;
+		// ===== Combinational Blocks =====
+		always_comb begin //state
+			if (i_MA_start == 1'd0) state_w  = S_IDLE;
+			else begin
+				case(state_r)
+					S_IDLE: begin
+						if(i_MA_start) state_w = S_LONE;
+						else state_w = state_r;
+					end
+
+					S_LONE: begin
+						state_w = S_LODD;
+					end
+
+					S_LODD: begin
+						state_w = S_LSFT;
+					end
+
+					S_LSFT: begin
+						state_w = (counter_r == BIT) ? S_POST : S_LONE;
+					end
+
+					S_POST: begin
+						// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+						state_w = S_IDLE;
+					end
+
+					default: state_w = state_r;
+				endcase
 			end
+		end
 
-			S_LONE: begin
-				state_w = S_LODD;
+		always_comb begin //counter
+			case(state_r)
+				S_IDLE: counter_w = 9'b0;
+				S_LSFT: counter_w = counter_r + 1;
+				S_POST: counter_w = 9'b0;
+
+				default: counter_w = counter_r;
+			endcase
+		end
+
+		always_comb begin //MA_o
+			case (state_r)
+				S_IDLE: o_MA_w = 256'b0;
+				S_LONE: begin
+					if(i_MA_a[counter_r] == 1'b1) o_MA_w = o_MA_r + i_MA_b;
+					else o_MA_w = o_MA_r;
+				end
+
+				S_LODD: begin
+					if(o_MA_r[0] == 1'b1) o_MA_w = o_MA_r + i_n;
+					else o_MA_w = o_MA_r;
+				end
+
+				S_LSFT: begin
+					o_MA_w = o_MA_r >> 1;
+				end
+
+				S_POST: begin
+					o_MA_w = (o_MA_r >= i_n) ? o_MA_r - i_n : o_MA_r;
+				end
+
+				default: o_MA_w = o_MA_r;
+			endcase
+		end
+
+		always_comb begin //MA_end
+			case(state_r)
+				S_IDLE: o_MA_end_w = 1'b0;
+				S_POST: o_MA_end_w = 1'b1;
+				default: o_MA_end_w = o_MA_end_r;
+			endcase
+		end
+
+		/*always_comb begin //MA_a, MA_b
+			case(state_r)
+				S_IDLE: begin
+					MA_a_w = MA_a;
+					MA_b_w = MA_b;
+				end
+				default: begin
+					MA_a_w = MA_a_r;
+					MA_b_w = MA_b_r;
+				end
+			endcase
+		end*/
+
+		// ===== Sequential Blocks =====
+		always_ff @(posedge i_clk or posedge i_rst) begin
+			if(i_rst) begin
+				state_r 	<= S_IDLE;
+				o_MA_r 		<= 256'b0;
+				o_MA_end_r 	<= 1'b0;
+				counter_r 	<= 9'b0;
+				//MA_a_r 		<= MA_a;
+				//MA_b_r 		<= MA_b;
 			end
-
-			S_LODD: begin
-				state_w = S_LSFT;
+			else begin
+				state_r 	<= state_w;
+				o_MA_r 		<= o_MA_w;
+				o_MA_end_r 	<= o_MA_end_w;
+				counter_r 	<= counter_w;
+				//MA_a_r 		<= MA_a_w;
+				//MA_b_r 		<= MA_b_w;
 			end
-
-			S_LSFT: begin
-				state_w = (counter_r == BIT) ? S_POST : S_LONE;
-			end
-
-			S_POST: begin
-				// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
-				state_w = S_IDLE;
-			end
-
-			default: state_w = state_r;
-		endcase
-	end
-end
-
-always_comb begin //counter
-	case(state_r)
-		S_IDLE: counter_w = 9'b0;
-		S_LSFT: counter_w = counter_r + 1;
-		S_POST: counter_w = 9'b0;
-
-		default: counter_w = counter_r;
-	endcase
-end
-
-always_comb begin //MA_o
-	case (state_r)
-		S_IDLE: o_MA_w = 256'b0;
-		S_LONE: begin
-			if(i_MA_a[counter_r] == 1'b1) o_MA_w = o_MA_r + i_MA_b;
-			else o_MA_w = o_MA_r;
+			
 		end
-
-		S_LODD: begin
-			if(o_MA_r[0] == 1'b1) o_MA_w = o_MA_r + i_n;
-			else o_MA_w = o_MA_r;
-		end
-
-		S_LSFT: begin
-			o_MA_w = o_MA_r >> 1;
-		end
-
-		S_POST: begin
-			o_MA_w = (o_MA_r >= i_n) ? o_MA_r - i_n : o_MA_r;
-		end
-
-		default: o_MA_w = o_MA_r;
-	endcase
-end
-
-always_comb begin //MA_end
-	case(state_r)
-		S_IDLE: o_MA_end_w = 1'b0;
-		S_POST: o_MA_end_w = 1'b1;
-		default: o_MA_end_w = o_MA_end_r;
-	endcase
-end
-
-/*always_comb begin //MA_a, MA_b
-	case(state_r)
-		S_IDLE: begin
-			MA_a_w = MA_a;
-			MA_b_w = MA_b;
-		end
-		default: begin
-			MA_a_w = MA_a_r;
-			MA_b_w = MA_b_r;
-		end
-	endcase
-end*/
-
-// ===== Sequential Blocks =====
-always_ff @(posedge i_clk or posedge i_rst) begin
-	if(i_rst) begin
-		state_r 	<= S_IDLE;
-		o_MA_r 		<= 256'b0;
-		o_MA_end_r 	<= 1'b0;
-		counter_r 	<= 9'b0;
-		//MA_a_r 		<= MA_a;
-		//MA_b_r 		<= MA_b;
-	end
-	else begin
-		state_r 	<= state_w;
-		o_MA_r 		<= o_MA_w;
-		o_MA_end_r 	<= o_MA_end_w;
-		counter_r 	<= counter_w;
-		//MA_a_r 		<= MA_a_w;
-		//MA_b_r 		<= MA_b_w;
-	end
-	
-end
 
 endmodule
 
@@ -491,125 +491,125 @@ module ModProd (
 	output 			o_MP_end
 );
 
-localparam S_IDLE = 2'd0;
-localparam S_SHFT = 2'd1;
-localparam S_CIRC = 2'd2;
-localparam S_LAST = 2'd3;
+		localparam S_IDLE = 2'd0;
+		localparam S_SHFT = 2'd1;
+		localparam S_CIRC = 2'd2;
+		localparam S_LAST = 2'd3;
 
-localparam 		BIT = 9'd256;
-logic [2:0] 	state_r, state_w;
-logic [269:0] 	MP_a_w, MP_a_r;
-logic [9:0] 	counter_w, counter_r;
-logic [269:0] 	MP_out_w, MP_out_r;
-logic 			MP_end_w, MP_end_r;
+		localparam 		BIT = 9'd256;
+		logic [2:0] 	state_r, state_w;
+		logic [269:0] 	MP_a_w, MP_a_r;
+		logic [9:0] 	counter_w, counter_r;
+		logic [269:0] 	MP_out_w, MP_out_r;
+		logic 			MP_end_w, MP_end_r;
 
 
-assign MP_a_w = i_MP_a;
-assign o_MP_a = MP_out_r;
-assign o_MP_end = MP_end_r;
+		assign MP_a_w = i_MP_a;
+		assign o_MP_a = MP_out_r;
+		assign o_MP_end = MP_end_r;
 
-// ===== Combinational blocks =====
-always_comb begin //counter
-	case(state_r)
-		S_IDLE: begin
-			counter_w = 9'b0;
+		// ===== Combinational blocks =====
+		always_comb begin //counter
+			case(state_r)
+				S_IDLE: begin
+					counter_w = 9'b0;
+				end
+
+				S_CIRC: begin
+					counter_w = (counter_r == BIT) ? counter_r : counter_r + 1;
+				end
+
+				default: counter_w = counter_r; 
+			endcase
 		end
 
-		S_CIRC: begin
-			counter_w = (counter_r == BIT) ? counter_r : counter_r + 1;
+		always_comb begin //state
+			case(state_r)
+				S_IDLE: begin
+					state_w = (i_MP_start == 1'b1)? S_WORK : state_r;
+				end
+
+				S_SHFT: begin
+					state_w = (counter_r <= BIT) ? S_CIRC : state_r;
+				end
+
+				S_CIRC: begin
+					state_w = (counter_r == BIT) ? S_LAST : S_SHFT;
+
+				S_LAST: begin
+					state_w = (MP_end r == 1'b1) ? S_IDLE : state_r;
+				end
+				default: state_w = state_r;
+			endcase
 		end
 
-		default: counter_w = counter_r; 
-	endcase
-end
+		always_comb begin //MP_end
+			case(state_r)
+				S_IDLE: begin
+					MP_end_w = 1'b0;
+				end
 
-always_comb begin //state
-	case(state_r)
-		S_IDLE: begin
-			state_w = (i_MP_start == 1'b1)? S_WORK : state_r;
+				S_LAST: begin
+					MP_end_w = (counter_r == BIT) ? 1'b1 : MP_end_r;
+				end
+
+				default: MP_end_w = MP_end_r;
+			endcase
 		end
 
-		S_SHFT: begin
-			state_w = (counter_r <= BIT) ? S_CIRC : state_r;
+		always_comb begin //MP_a
+			case(state_r)
+				S_IDLE: begin
+					MP_a_w = i_MP_a;
+				end
+
+				S_WORK: begin
+					MP_a_w = (counter_r == BIT) ? MP_a_r : MP_a_r << 1;
+				end
+
+				S_CIRC: begin
+					MP_a_w = (counter_r < BIT && MP_a_r >= i_n) ? MP_a_r - 1 : MP_a_r;
+				end
+
+				S_LAST: begin
+					MP_a_w = (counter_r == BIT && MP_a_r >= i_n) ? MP_a_r - i_n : MP_a_r;
+				end
+
+				default: MP_a_w = MP_a_r;
+			endcase
 		end
 
-		S_CIRC: begin
-			state_w = (counter_r == BIT) ? S_LAST : S_SHFT;
+		always_comb begin //MP_out
+			case(state_r)
+				S_IDLE: begin
+					MP_out_w = 269'd0;
+				end
 
-		S_LAST: begin
-			state_w = (MP_end r == 1'b1) ? S_IDLE : state_r;
-		end
-		default: state_w = state_r;
-	endcase
-end
-
-always_comb begin //MP_end
-	case(state_r)
-		S_IDLE: begin
-			MP_end_w = 1'b0;
+				S_LAST: begin
+					MP_out_w = (MP_end_r == 1'b1) ? MP_a_r : MP_out_r;
+				end
+				default:  MP_out_w = MP_out_r;
+			endcase
 		end
 
-		S_LAST: begin
-			MP_end_w = (counter_r == BIT) ? 1'b1 : MP_end_r;
+		// ===== Sequential blocks =====
+		always_ff @(posedge i_clk or posedge i_rst) begin
+			if(i_rst) begin
+				state_r 		<= S_IDLE;
+				MP_out_r 		<= 269'b0;
+				MP_end_r 		<= 1'b0;
+				counter_r 		<= 9'b0;
+				MA_a_r 			<= i_MP_a;
+			end
+			else begin
+				state_r 		<= state_w;
+				MP_out_r 		<= MP_out_w;
+				MP_end_r 		<= MP_end_w;
+				counter_r 		<= counter_w;
+				MP_a_r 			<= MP_a_w;
+			end
 		end
-
-		default: MP_end_w = MP_end_r;
-	endcase
-end
-
-always_comb begin //MP_a
-	case(state_r)
-		S_IDLE: begin
-			MP_a_w = i_MP_a;
-		end
-
-		S_WORK: begin
-			MP_a_w = (counter_r == BIT) ? MP_a_r : MP_a_r << 1;
-		end
-
-		S_CIRC: begin
-			MP_a_w = (counter_r < BIT && MP_a_r >= i_n) ? MP_a_r - 1 : MP_a_r;
-		end
-
-		S_LAST: begin
-			MP_a_w = (counter_r == BIT && MP_a_r >= i_n) ? MP_a_r - i_n : MP_a_r;
-		end
-
-		default: MP_a_w = MP_a_r;
-	endcase
-end
-
-always_comb begin //MP_out
-	case(state_r)
-		S_IDLE: begin
-			MP_out_w = 269'd0;
-		end
-
-		S_LAST: begin
-			MP_out_w = (MP_end_r == 1'b1) ? MP_a_r : MP_out_r;
-		end
-		default:  MP_out_w = MP_out_r;
-	endcase
-end
-
-// ===== Sequential blocks =====
-always_ff @(posedge i_clk or posedge i_rst) begin
-	if(i_rst) begin
-		state_r 		<= S_IDLE;
-		MP_out_r 		<= 269'b0;
-		MP_end_r 		<= 1'b0;
-		counter_r 		<= 9'b0;
-		MA_a_r 			<= i_MP_a;
-	end
-	else begin
-		state_r 		<= state_w;
-		MP_out_r 		<= MP_out_w;
-		MP_end_r 		<= MP_end_w;
-		counter_r 		<= counter_w;
-		MP_a_r 			<= MP_a_w;
-	end
-end
-	
+			
 
 
 endmodule
