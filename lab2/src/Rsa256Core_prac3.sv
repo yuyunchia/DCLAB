@@ -5,7 +5,7 @@ module Rsa256Core (
 	input  [255:0] i_a, // cipher text y
 	input  [255:0] i_d, // private key
 	input  [255:0] i_n, // divisor
-	output [269:0] o_a_pow_d, // plain text x
+	output [255:0] o_a_pow_d, // plain text x
 	output         o_finished // the whole process has done
 );
 
@@ -23,15 +23,13 @@ logic [269:0] o_a_pow_d_r, o_a_pow_d_w;
 logic o_finished_r, o_finished_w;
 
 // ===== Parameters =====
-localparam BIT = 9'd256;
+localparam BIT = 9'd255;
 logic [8:0] M_counter_r, M_counter_w;
-logic [2:0] state_r, state_w;
 
 logic MP_start_r, MP_start_w;
-logic MP_end;							// specify in MP module, no need to specify in the main module
-logic [269:0] MP_o;
 logic [269:0] MP_r, MP_w; 				// output for ModuloProduct
 logic [269:0] t_r, t_w; 				
+logic [2:0] state_r, state_w;
 
 logic MA_start_r, MA_start_w; 			// Montgomery Algorithm parameter
 logic [269:0] MA_a_r, MA_a_w;
@@ -49,15 +47,7 @@ MontAlg ma1(
 	.o_MA(MA_o),
 	.o_MA_end(MA_end)
 );
-ModProd mp1(
-	.i_clk(i_clk),
-	.i_rst(i_rst),
-	.i_MP_start(MP_start_r),
-	.i_n(i_n),
-	.i_MP_a(i_a),
-	.o_MP_a(MP_o),
-	.o_MP_end(MP_end)
-);
+
 
 // ===== Output Assignments ===== 
 assign o_a_pow_d = o_a_pow_d_r;
@@ -71,10 +61,28 @@ always_comb begin // M_counter
 		end
 
 		S_CALC: begin
-			M_counter_w = (M_counter_r <= BIT && MA_end == 1'd1) ? M_counter_r + 1 : M_counter_r; // 0~255
+			M_counter_w = (M_counter_r < BIT && MA_end == 1'd1) ? M_counter_r + 1 : M_counter_r; // 0~255
 		end
 
 		default: M_counter_w = M_counter_r;
+	endcase
+end
+
+always_comb begin // MP_counter
+	case(state_r)
+		S_IDLE: begin 
+			MP_counter_w = 9'b0;
+		end
+
+		S_PREP: begin
+			MP_counter_w = (MP_counter_r < BIT) ? MP_counter_r + 1 : MP_counter_r; // 0~255
+		end
+
+		S_MONT: begin
+			MP_counter_w = 9'b0;
+		end
+
+		default: MP_counter_w = MP_counter_r;
 	endcase
 end
 
@@ -87,25 +95,24 @@ always_comb begin //state
 		
 		S_PREP: begin
 			if(i_start) state_w = S_PREP;
-			else state_w = (MP_end == 1'b1) ? S_MONT : state_r;
+			else state_w = (MP_counter_r == BIT) ? S_MONT : state_r;
 		end
 
 		S_MONT: begin
 			if(i_start) state_w = S_PREP;
-			else if (M_counter_r <= BIT) begin
+			else if (M_counter_r < BIT) begin
 				if (i_d[M_counter_r] == 1'b1 && MA_end == 1) state_w = S_CALC;
 				else if (i_d[M_counter_r] == 1'b0) state_w = S_CALC;
 				else state_w = state_r;
 			end
 			else state_w = state_r;
-
 		end
 
 		S_CALC: begin
 			if(i_start) state_w = S_PREP;
 			else begin
 				if(M_counter_r == BIT) state_w = S_IDLE;
-				else if (MA_end == 1 && M_counter_r < BIT-1) state_w = S_MONT;
+				else if (MA_end == 1 && M_counter_r < BIT) state_w = S_MONT;
 				else state_w = state_r;
 			end
 		end
@@ -117,25 +124,25 @@ always_comb begin //state
 	endcase
 end
 
-// always_comb begin // t
-// 	case(state_r)
-// 		S_IDLE: begin
-// 			t_w = 269'd0;
-// 		end
+always_comb begin // t
+	case(state_r)
+		S_IDLE: begin
+			t_w = 256'd0;
+		end
 
-// 		S_PREP: begin
-// 			t_w = (MP_counter_r == BIT) ? MP_r : t_r;
-// 		end
+		S_PREP: begin
+			t_w = (MP_counter_r == BIT) ? MP_r : t_r;
+		end
 
-// 		S_CALC: begin
-// 			if(M_counter_r < BIT && MA_end == 1'b1) t_w = MA_o;
-// 			else t_w = t_r;
-// 		end 
+		S_CALC: begin
+			if(M_counter_r < BIT && MA_end == 1'b1) t_w = MA_o;
+			else t_w = t_r;
+		end 
 
-// 		default: t_w = t_r;
-// 	endcase
+		default: t_w = t_r;
+	endcase
 
-// end
+end
 
 always_comb begin //o_finished
 	case(state_r)
@@ -152,53 +159,28 @@ always_comb begin //o_finished
 	
 end
 
-always_comb begin //o_a_pow_d
+always_comb begin //ModuloProduct
 	case(state_r)
 		S_IDLE: begin
-			o_a_pow_d_w = 270'd1;
+			MP_temp_w = i_a;
+			MP_w = 256'd0;
 		end
 
-		S_MONT: begin
-			if(M_counter_r <= BIT) begin
-				o_a_pow_d_w = (i_d[M_counter_r] == 1'b1 && MA_end == 1'b1) ? MA_o : o_a_pow_d_r;
+		S_PREP: begin // create i_a * 2^256
+			if (MP_counter_r < BIT) begin
+				MP_temp_w = (MP_temp_r + MP_temp_r > i_n) ? MP_temp_r + MP_temp_r - i_n : MP_temp_r + MP_temp_r;
 			end
-			else o_a_pow_d_w = o_a_pow_d_r;
-		end
-		default: o_a_pow_d_w = o_a_pow_d_r;
-	endcase
-end
-
-always_comb begin //MP_start
-	case(state_r)
-		S_IDLE: begin
-			MP_start_w = 1'b0;
+			else begin 
+				MP_w = (MP_r + MP_temp_r >= i_n) ? MP_r + MP_temp_r - i_n : MP_temp_r + MP_r;
+				MP_temp_w = (MP_temp_r + MP_temp_r > i_n) ? MP_temp_r + MP_temp_r - i_n : MP_temp_r + MP_temp_r;
+			end
+			
 		end
 
-		S_PREP: begin
-			MP_start_w = 1'b1;
+		default: begin
+			MP_w = MP_r; 
+			MP_temp_w = MP_temp_r;
 		end
-
-		S_MONT: begin
-			MP_start_w = 1'b0;
-		end
-		default: MP_start_w = MP_start_r;
-	endcase
-end
-
-always_comb begin //MP
-	case(state_r)
-		S_IDLE: begin
-			MP_w = 270'd0
-		end
-
-		S_PREP: begin
-			MP_w = (MP_end == 1'b1) ? MP_o : MP_r;
-		end
-
-		S_CALC: begin
-			MP_w = (MA_end == 1'b1) ? MA_o : MP_r;
-		end
-		default: MP_w = MP_r;
 	endcase
 end
 
@@ -213,7 +195,6 @@ always_comb begin //Montgomery Algorithm
 
 		S_MONT: begin
 			if(M_counter_r < BIT) begin
-
 				// if(i_d[M_counter_r] == 1'b1) begin
 				// 		MA_a_w = o_a_pow_d_r;  // MA_a = m
 				// 		MA_b_w = MP_r;         // MA_b = t
@@ -228,8 +209,6 @@ always_comb begin //Montgomery Algorithm
 				// 				o_a_pow_d_w = o_a_pow_d_r;
 				// 		end
 				// end
-
-				
 				if(MA_end == 1'b1) begin
 					MA_start_w = 1'b0;
 					MA_a_w = MA_a_r;
@@ -264,6 +243,7 @@ always_comb begin //Montgomery Algorithm
 			// 		MA_a_w = MP_r;
 			// 		MA_b_w = MP_r;
 			// 		MA_start_w = 1'b1;
+
 			// 	if(MA_end == 1'b1) begin
 			// 		MA_start_w = 1'b0;
 			// 	end
@@ -276,7 +256,6 @@ always_comb begin //Montgomery Algorithm
 			// 		MA_a_w = MA_a_r;
 			// 		MA_b_w = MA_b_r;
 			// end
-			
 			if(MA_end == 1'b1) begin
 					MA_start_w = 1'b0;
 					MA_a_w = MA_a_r;
@@ -354,7 +333,6 @@ localparam S_IDLE = 3'd0;
 localparam S_LONE = 3'd1;
 localparam S_LODD = 3'd2;
 localparam S_LSFT = 3'd3;
-
 localparam S_POST = 3'd4;
 
 localparam BIT = 9'd255;
@@ -372,34 +350,31 @@ assign o_MA_end = o_MA_end_r;
 
 // ===== Combinational Blocks =====
 always_comb begin //state
-	if (i_MA_start == 1'd0) state_w  = S_IDLE;
-	else begin
-		case(state_r)
-			S_IDLE: begin
-				if(i_MA_start) state_w = S_LONE;
-				else state_w = state_r;
-			end
+	case(state_r)
+		S_IDLE: begin
+			if(i_MA_start) state_w = S_LONE;
+			else state_w = state_r;
+		end
 
-			S_LONE: begin
-				state_w = S_LODD;
-			end
+		S_LONE: begin
+			state_w = S_LODD;
+		end
 
-			S_LODD: begin
-				state_w = S_LSFT;
-			end
+		S_LODD: begin
+			state_w = S_LSFT;
+		end
 
-			S_LSFT: begin
-				state_w = (counter_r == BIT) ? S_POST : S_LONE;
-			end
+		S_LSFT: begin
+			state_w = (counter_r == BIT) ? S_POST : S_LONE;
+		end
 
-			S_POST: begin
-				// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
-				state_w = S_IDLE;
-			end
+		S_POST: begin
+			// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+			state_w = S_IDLE;
+		end
 
-			default: state_w = state_r;
-		endcase
-	end
+		default: state_w = state_r;
+	endcase
 end
 
 always_comb begin //counter
@@ -610,6 +585,6 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 	end
 end
 	
-
+end
 
 endmodule
