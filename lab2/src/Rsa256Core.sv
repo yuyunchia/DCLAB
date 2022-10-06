@@ -30,8 +30,7 @@ logic [2:0] state_r, state_w;
 logic MP_start_r, MP_start_w;
 logic MP_end;							// specify in MP module, no need to specify in the main module
 logic [269:0] MP_o;
-logic [269:0] MP_r, MP_w; 				// output for ModuloProduct
-logic [269:0] t_r, t_w; 				
+logic [269:0] MP_r, MP_w; 				// output for ModuloProduct			
 
 logic MA_start_r, MA_start_w; 			// Montgomery Algorithm parameter
 logic [269:0] MA_a_r, MA_a_w;
@@ -116,25 +115,6 @@ always_comb begin //state
 	endcase
 end
 
-// always_comb begin // t
-// 	case(state_r)
-// 		S_IDLE: begin
-// 			t_w = 269'd0;
-// 		end
-
-// 		S_PREP: begin
-// 			t_w = (MP_counter_r == BIT) ? MP_r : t_r;
-// 		end
-
-// 		S_CALC: begin
-// 			if(M_counter_r < BIT && MA_end == 1'b1) t_w = MA_o;
-// 			else t_w = t_r;
-// 		end 
-
-// 		default: t_w = t_r;
-// 	endcase
-
-// end
 
 always_comb begin //o_finished
 	case(state_r)
@@ -187,7 +167,7 @@ end
 always_comb begin //MP
 	case(state_r)
 		S_IDLE: begin
-			MP_w = 270'd0
+			MP_w = 270'd0;
 		end
 
 		S_PREP: begin
@@ -201,107 +181,46 @@ always_comb begin //MP
 	endcase
 end
 
-always_comb begin //Montgomery Algorithm
+always_comb begin //MA_start
 	case(state_r)
 		S_IDLE: begin
 			MA_start_w = 1'b0;
-			o_a_pow_d_w = 256'b1;
-			MA_a_w = 256'd0;
-			MA_b_w = 256'd0;
 		end
 
 		S_MONT: begin
-			if(M_counter_r < BIT) begin
-				// if(i_d[M_counter_r] == 1'b1) begin
-				// 		MA_a_w = o_a_pow_d_r;  // MA_a = m
-				// 		MA_b_w = MP_r;         // MA_b = t
-				// 		MA_start_w = 1'b1;    
-						
-				// 		if(MA_end == 1'b1) begin
-				// 				MA_start_w = 1'b0;
-				// 				o_a_pow_d_w = MA_o;
-				// 		end
-				// 		else begin
-				// 				MA_start_w = MA_start_r;
-				// 				o_a_pow_d_w = o_a_pow_d_r;
-				// 		end
-				// end
-				if(MA_end == 1'b1) begin
-					MA_start_w = 1'b0;
-					MA_a_w = MA_a_r;
-					MA_b_w = MA_b_r;
-				 	o_a_pow_d_w = MA_o;
-				end
-				else if (i_d[M_counter_r] == 1'b1) begin
-						MA_a_w = o_a_pow_d_r;
-						MA_b_w = MP_r;
-						MA_start_w = 1'b1;
-						o_a_pow_d_w = o_a_pow_d_r;
-				end
-				else begin
-						MA_start_w = MA_start_r;
-						MA_a_w = MA_a_r;
-						MA_b_w = MA_b_r;
-						o_a_pow_d_w = o_a_pow_d_r;
-				end
-				
-			end
-
-			else begin 
-				o_a_pow_d_w = o_a_pow_d_r;
-				MA_start_w = MA_start_r;
-				MA_a_w = MA_a_r;
-				MA_b_w = MA_b_r;
-			end
+			MA_start_w = (i_d[M_counter_r] == 1'b1 && M_counter_r <= BIT) ? 1'b1 : MA_start_r;
 		end
 
 		S_CALC: begin
-			// if(M_counter_r < BIT) begin
-			// 		MA_a_w = MP_r;
-			// 		MA_b_w = MP_r;
-			// 		MA_start_w = 1'b1;
+			MA_start_w = 1'b1;
+		end
+		default: MA_start_w = MA_start_r;
+	endcase
+end
 
-			// 	if(MA_end == 1'b1) begin
-			// 		MA_start_w = 1'b0;
-			// 	end
-			// 	else begin
-			// 		MA_start_w = MA_start_r;
-			// 	end
-			// end
-			// else begin
-			// 		MA_start_w = MA_start_r;
-			// 		MA_a_w = MA_a_r;
-			// 		MA_b_w = MA_b_r;
-			// end
-			if(MA_end == 1'b1) begin
-					MA_start_w = 1'b0;
-					MA_a_w = MA_a_r;
-					MA_b_w = MA_b_r;
-					o_a_pow_d_w = o_a_pow_d_r;
-			end
-			else if (M_counter_r < BIT) begin
-					MA_a_w = MP_r;
-					MA_b_w = MP_r;
-					MA_start_w = 1'b1;
-					o_a_pow_d_w = o_a_pow_d_r;
-			end
-			else begin
-					MA_start_w = MA_start_r;
-					MA_a_w = MA_a_r;
-					MA_b_w = MA_b_r;
-					o_a_pow_d_w = o_a_pow_d_r;
-			end
+always_comb begin //MA_a, MA_b
+	case(state_r)
+		S_IDLE: begin
+			MA_a_w = 270'd0;
+			MA_b_w = 270'd0;
 		end
 
+		S_MONT: begin
+			MA_a_w = (i_d[M_counter_r] == 1'b1 && M_counter_r <= BIT) ? o_a_pow_d_r : MA_a_r;
+			MA_b_w = (i_d[M_counter_r] == 1'b1 && M_counter_r <= BIT) ? MP_r : MA_b_r;
+		end
+
+		S_CALC: begin
+			MA_a_w = MP_r;
+			MA_b_w = MP_r;
+		end
 		default: begin
-			o_a_pow_d_w = o_a_pow_d_r;
-			MA_start_w = MA_start_r;
 			MA_a_w = MA_a_r;
 			MA_b_w = MA_b_r;
 		end
-
 	endcase
 end
+
 
 // ===== Sequential Circuits =====
 always_ff @(posedge i_clk or posedge i_rst) begin
@@ -310,26 +229,23 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		o_a_pow_d_r 	<= 256'b1;
 		o_finished_r 	<= 1'd0;
 		M_counter_r 	<= 256'b0;
-		MP_counter_r 	<= 256'b0;
-		MP_temp_r 		<= 256'b0;
+		MP_start_r 		<= 1'b0;
 		MP_r 			<= 256'b0;
 		MA_start_r 		<= 256'b0;
 		MA_a_r			<= 256'b0;
 		MA_b_r 			<= 256'b0;
-		t_r 			<= 256'b0;
+
 	end
 	else begin
 		state_r 		<= state_w;
 		o_a_pow_d_r 	<= o_a_pow_d_w;
 		o_finished_r 	<= o_finished_w;
 		M_counter_r 	<= M_counter_w;
-		MP_counter_r 	<= MP_counter_w;
-		MP_temp_r 		<= MP_temp_w;
+		MP_start_r 		<= MP_start_w;
 		MP_r 			<= MP_w;
 		MA_start_r 		<= MA_start_w;
 		MA_a_r			<= MA_a_w;
 		MA_b_r 			<= MA_b_w;
-		t_r 			<= t_w;
 	end 
 end
 endmodule
@@ -518,7 +434,7 @@ end
 always_comb begin //state
 	case(state_r)
 		S_IDLE: begin
-			state_w = (i_MP_start == 1'b1)? S_WORK : state_r;
+			state_w = (i_MP_start == 1'b1)? S_SHFT : state_r;
 		end
 
 		S_SHFT: begin
@@ -527,9 +443,10 @@ always_comb begin //state
 
 		S_CIRC: begin
 			state_w = (counter_r == BIT) ? S_LAST : S_SHFT;
+		end
 
 		S_LAST: begin
-			state_w = (MP_end r == 1'b1) ? S_IDLE : state_r;
+			state_w = (MP_end_r == 1'b1) ? S_IDLE : state_r;
 		end
 		default: state_w = state_r;
 	endcase
@@ -555,7 +472,7 @@ always_comb begin //MP_a
 			MP_a_w = i_MP_a;
 		end
 
-		S_WORK: begin
+		S_SHFT: begin
 			MP_a_w = (counter_r == BIT) ? MP_a_r : MP_a_r << 1;
 		end
 
@@ -591,7 +508,7 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		MP_out_r 		<= 269'b0;
 		MP_end_r 		<= 1'b0;
 		counter_r 		<= 9'b0;
-		MA_a_r 			<= i_MP_a;
+		MP_a_r 			<= i_MP_a;
 	end
 	else begin
 		state_r 		<= state_w;
@@ -600,8 +517,6 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		counter_r 		<= counter_w;
 		MP_a_r 			<= MP_a_w;
 	end
-end
-	
 end
 
 endmodule
