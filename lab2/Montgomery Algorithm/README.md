@@ -19,7 +19,7 @@ EXSQ      (N=3901, y=19, d=3): 2958
 RSA256MONT(N=3901, y=19, d=3): 2958
 =============================================
 
-You can modify value of N, y, d to generate other test data
+You can modify value of N, a, b to generate other test data
 
 Suppose that :
 MA(N=    7, a= 2, b= 4):    4 
