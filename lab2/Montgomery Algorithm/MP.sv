@@ -105,6 +105,7 @@ module ModProd (
 
 				S_LAST: begin
 					// MP_out_w = (MP_end_r == 1'b1) ? MP_a_r : MP_out_r; 
+                    // MP_out_w = (counter == BIT) ? MP_a_r : MP_out_r; 
                     MP_out_w =  MP_a_r; 
 				end
 				default:  MP_out_w = MP_out_r;

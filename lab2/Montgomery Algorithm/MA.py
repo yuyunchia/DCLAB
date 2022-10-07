@@ -61,14 +61,14 @@ def RSA256MONT(N, y, d):
 
 
 
-N = 3901
+N = 7
 a = 722
 b = 722
 k = len(bin(a))-2
 # ans = MP(N, a, b, k)
 # ans2 = MA(N, a, b, k)
-y = 19
-d = 3
+y = 2
+d = 5
 
 
 """
