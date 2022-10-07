@@ -23,7 +23,7 @@ logic [269:0] o_a_pow_d_r, o_a_pow_d_w;
 logic o_finished_r, o_finished_w;
 
 // ===== Parameters =====
-localparam BIT = 9'd256;
+localparam BIT = 9'd255;
 logic [8:0] M_counter_r, M_counter_w;
 logic [2:0] state_r, state_w;
 
