@@ -38,3 +38,13 @@ e_yu.txt(value of y)    d_yu.txt(value of y^d mod N)
 19                      2958          
 3577                    595
 ```
+### To run testbench
+```
+cd ./src/tb_verilog
+
+for tb_yu.sv: 
+ncverilog tb_yu.sv Rsa256Core.sv +access+r
+
+for tb.sv: 
+ncverilog tb.sv Rsa256Core.sv +access+r
+``` 
