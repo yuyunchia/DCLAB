@@ -405,7 +405,7 @@ localparam S_CIRC = 4'd2;
 localparam S_MINS = 4'd3;
 localparam S_LAST = 4'd4;
 
-localparam 		BIT = 9'd256;
+localparam		BIT = 9'd256;
 logic [3:0] 	state_r, state_w;
 logic [269:0] 	MP_a_w, MP_a_r;
 logic [9:0] 	counter_w, counter_r;
@@ -477,11 +477,11 @@ always_comb begin //MP_a
 		end
 
 		S_SHFT: begin
-			MP_a_w = (counter_r == BIT) ? MP_a_r : MP_a_r << 1;
+			MP_a_w = (counter_r < BIT) ? MP_a_r << 1 : MP_a_r;
 		end
 
 		S_CIRC: begin
-			MP_a_w = (counter_r < BIT && MP_a_r >= i_n) ? MP_a_r - 1 : MP_a_r;
+			MP_a_w = (counter_r < BIT && MP_a_r >= i_n) ? MP_a_r - i_n : MP_a_r;
 		end
 
 		S_MINS: begin
@@ -499,7 +499,7 @@ always_comb begin //MP_out
 		end
 
 		S_LAST: begin
-			MP_out_w = (MP_end_r == 1'b1) ? MP_a_r : MP_out_r;
+			MP_out_w = MP_a_r;
 		end
 		default:  MP_out_w = MP_out_r;
 	endcase
