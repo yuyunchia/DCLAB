@@ -24,8 +24,9 @@ logic o_finished_r, o_finished_w;
 
 // ===== Parameters =====
 localparam BIT = 9'd255;
-logic [8:0] M_counter_r, M_counter_w;
-logic [2:0] state_r, state_w;
+logic [8:0] 	M_counter_r, M_counter_w;
+logic [2:0] 	state_r, state_w;
+logic [269:0] 	i_a_r, i_a_w;
 
 logic MP_start_r, MP_start_w;
 logic MP_end;							// specify in MP module, no need to specify in the main module
@@ -53,7 +54,7 @@ ModProd mp1(
 	.i_rst(i_rst),
 	.i_MP_start(MP_start_r),
 	.i_n(i_n),
-	.i_MP_a(i_a),
+	.i_MP_a(i_a_r),
 	.o_MP_a(MP_o),
 	.o_MP_end(MP_end)
 );
@@ -63,6 +64,15 @@ assign o_a_pow_d = o_a_pow_d_r;
 assign o_finished = o_finished_r;
 
 // ===== Combinational Circuits ===== 
+always_comb begin //i_a
+	case(state_r)
+		S_IDLE: begin
+			i_a_w = i_a;
+		end
+		default: i_a_w = i_a_r;
+	endcase
+end
+
 always_comb begin // M_counter
 	case(state_r)
 		S_IDLE: begin 
@@ -234,6 +244,7 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		MA_start_r 		<= 256'b0;
 		MA_a_r			<= 256'b0;
 		MA_b_r 			<= 256'b0;
+		i_a_r 			<= i_a;
 
 	end
 	else begin
@@ -246,6 +257,7 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		MA_start_r 		<= MA_start_w;
 		MA_a_r			<= MA_a_w;
 		MA_b_r 			<= MA_b_w;
+		i_a_r 			<= i_a_w;
 	end 
 end
 endmodule
