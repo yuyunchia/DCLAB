@@ -13,21 +13,19 @@ module Rsa256Core (
 // namely, the Montgomery algorithm
 
 // ===== States =====
-localparam S_IDLE   = 3'd0;
-localparam S_PREP   = 3'd1;
-localparam S_MONT   = 3'd2;
-localparam S_BUFR 	= 3'd3;
-localparam S_CALC   = 3'd4;
-localparam S_BUF2 	= 3'd5;
+localparam S_IDLE   = 2'd0;
+localparam S_PREP   = 2'd1;
+localparam S_MONT   = 2'd2;
+localparam S_CALC   = 2'd3;
 
 // ===== Output Buffers =====
 logic [269:0] o_a_pow_d_r, o_a_pow_d_w;
 logic o_finished_r, o_finished_w;
 
 // ===== Parameters =====
-localparam BIT = 9'd256;
+localparam BIT = 9'd255;
 logic [8:0] 	M_counter_r, M_counter_w;
-logic [3:0] 	state_r, state_w;
+logic [2:0] 	state_r, state_w;
 logic [269:0] 	i_a_r, i_a_w;
 
 logic MP_start_r, MP_start_w;
@@ -98,34 +96,26 @@ always_comb begin //state
 		
 		S_PREP: begin
 			if(i_start) state_w = S_PREP;
-			else state_w = (MP_end == 1'b1) ? S_BUF2 : state_r;
+			else state_w = (MP_end == 1'b1) ? S_MONT : state_r;
 		end
 
 		S_MONT: begin
 			if(i_start) state_w = S_PREP;
 			else if (M_counter_r <= BIT) begin
-				if (i_d[M_counter_r] == 1'b1 && MA_end == 1) state_w = S_BUFR;
-				else if (i_d[M_counter_r] == 1'b0) state_w = S_BUFR;
+				if (i_d[M_counter_r] == 1'b1 && MA_end == 1) state_w = S_CALC;
+				else if (i_d[M_counter_r] == 1'b0) state_w = S_CALC;
 				else state_w = state_r;
 			end
 			else state_w = state_r;
-		end
-
-		S_BUFR: begin
-			state_w = S_CALC;
 		end
 
 		S_CALC: begin
 			if(i_start) state_w = S_PREP;
 			else begin
 				if(o_finished_r == 1'b1) state_w = S_IDLE;
-				else if (MA_end == 1 && M_counter_r < BIT) state_w = S_BUF2;
+				else if (MA_end == 1 && M_counter_r < BIT) state_w = S_MONT;
 				else state_w = state_r;
 			end
-		end
-
-		S_BUF2: begin
-			state_w = S_MONT;
 		end
 
 		default: begin
@@ -211,16 +201,8 @@ always_comb begin //MA_start
 			MA_start_w = (i_d[M_counter_r] == 1'b1 && M_counter_r <= BIT) ? 1'b1 : 1'b0;
 		end
 
-		S_BUFR: begin
-			MA_start_w = 1'b0;
-		end
-
 		S_CALC: begin
 			MA_start_w = 1'b1;
-		end
-		
-		S_BUF2: begin
-			MA_start_w = 1'b0;
 		end
 		default: MA_start_w = MA_start_r;
 	endcase
@@ -233,12 +215,12 @@ always_comb begin //MA_a, MA_b
 			MA_b_w = 270'd0;
 		end
 
-		S_BUF2: begin
+		S_MONT: begin
 			MA_a_w = (i_d[M_counter_r] == 1'b1 && M_counter_r <= BIT) ? o_a_pow_d_r : MA_a_r;
 			MA_b_w = (i_d[M_counter_r] == 1'b1 && M_counter_r <= BIT) ? MP_r : MA_b_r;
 		end
 
-		S_BUFR: begin
+		S_CALC: begin
 			MA_a_w = MP_r;
 			MA_b_w = MP_r;
 		end
@@ -320,9 +302,9 @@ always_comb begin //MA_start
 			end
 			
 			S_LONE: begin
-				MA_start_w = 1'b0;
+				MP_start_w = 1'b0;
 			end
-			default: MA_start_w = MA_start_r;
+			default: MP_start_w = MP_start_r;
 		endcase
 end 
 

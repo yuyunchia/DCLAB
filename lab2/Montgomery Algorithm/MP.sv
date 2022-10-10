@@ -20,12 +20,25 @@ logic [269:0] 	MP_a_w, MP_a_r;
 logic [9:0] 	counter_w, counter_r;
 logic [269:0] 	MP_out_w, MP_out_r;
 logic 			MP_end_w, MP_end_r;
-
+logic 			MP_start_r, MP_start_w;
 
 assign o_MP_a = MP_out_r;
 assign o_MP_end = MP_end_r;
 
 // ===== Combinational blocks =====
+always_comb begin //MP_start
+	case(state_r)
+		S_IDLE: begin
+			MP_start_w = i_MP_start;
+		end
+		
+		S_SHFT: begin
+			MP_start_w = 1'b0;
+		end
+		default: MP_start_w = MP_start_r;
+	endcase
+end
+
 always_comb begin //counter
 	case(state_r)
 		S_IDLE: begin
@@ -43,7 +56,7 @@ end
 always_comb begin //state
 	case(state_r)
 		S_IDLE: begin
-			state_w = (i_MP_start == 1'b1)? S_SHFT : state_r;
+			state_w = (MP_start_r == 1'b1)? S_SHFT : state_r;
 		end
 
 		S_SHFT: begin
@@ -122,6 +135,7 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		MP_end_r 		<= 1'b0;
 		counter_r 		<= 9'b0;
 		MP_a_r 			<= i_MP_a;
+		MP_start_r 		<= 1'b0;
 	end
 	else begin
 		state_r 		<= state_w;
@@ -129,6 +143,7 @@ always_ff @(posedge i_clk or posedge i_rst) begin
 		MP_end_r 		<= MP_end_w;
 		counter_r 		<= counter_w;
 		MP_a_r 			<= MP_a_w;
+		MP_start_r 		<= MP_start_w;
 	end
 end
 
