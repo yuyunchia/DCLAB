@@ -10,7 +10,8 @@ module MA_tb;
 	localparam HCLK = CLK/2;
 
 	logic clk, rst, MA_start, MA_end;
-    logic [255:0] n, MA_a, MA_b, MA_o, golden;
+    logic [255:0] n;
+	logic [269:0] MA_a, MA_b, MA_o, golden;
 	initial clk = 0;
 	always #HCLK clk = ~clk;
 	integer fp_MA_a, fp_MA_b, fp_n, fp_MA_o;

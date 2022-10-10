@@ -53,7 +53,7 @@ module tb;
 	end
 
 	initial begin
-		#(500000*CLK)
+		#(2500000*CLK)
 		$display("Too slow, abort.");
 		$finish;
 	end

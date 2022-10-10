@@ -1,12 +1,11 @@
-
 module MontAlg(
 	input i_clk,
 	input i_rst,
 	input i_MA_start, 
 	input [255:0] i_n, 
-	input [255:0] i_MA_a, 
-	input [255:0] i_MA_b, 
-	output [255:0] o_MA,
+	input [269:0] i_MA_a, 
+	input [269:0] i_MA_b, 
+	output [269:0] o_MA,
 	output o_MA_end
 );
 
@@ -16,12 +15,12 @@ localparam S_LODD = 3'd2;
 localparam S_LSFT = 3'd3;
 localparam S_POST = 3'd4;
 
-// localparam BIT = 9'd256;
-localparam BIT = 9'd255;
-logic [255:0] o_MA_r, o_MA_w;
-logic o_MA_end_r, o_MA_end_w;
-logic [9:0] counter_r, counter_w;
-logic [2:0] state_r, state_w;
+localparam 		BIT = 9'd255;
+logic [269:0] 	o_MA_r, o_MA_w;
+logic 			o_MA_end_r, o_MA_end_w;
+logic [9:0] 	counter_r, counter_w;
+logic [2:0] 	state_r, state_w;
+logic 			MA_start_r, MA_start_w;
 //local [255:0] MA_a_r, MA_a_w;
 //local [255:0] MA_b_r, MA_b_w;
 
@@ -31,10 +30,23 @@ assign o_MA_end = o_MA_end_r;
 //assign MA_b_w = MA_b;
 
 // ===== Combinational Blocks =====
+always_comb begin //MA_start
+	case(state_r)
+			S_IDLE: begin
+				MA_start_w = i_MA_start;
+			end
+			
+			S_LONE: begin
+				MA_start_w = 1'b0;
+			end
+			default: MA_start_w = MA_start_r;
+		endcase
+end 
+
 always_comb begin //state
 	case(state_r)
 		S_IDLE: begin
-			if(i_MA_start) state_w = S_LONE;
+			if(MA_start_r) state_w = S_LONE;
 			else state_w = state_r;
 		end
 
@@ -51,7 +63,8 @@ always_comb begin //state
 		end
 
 		S_POST: begin
-			state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+			// state_w = (o_MA_end_r == 1'b1) ? S_IDLE : state_r;
+			state_w = S_IDLE;
 		end
 
 		default: state_w = state_r;
@@ -70,7 +83,7 @@ end
 
 always_comb begin //MA_o
 	case (state_r)
-		S_IDLE: o_MA_w = 256'b0;
+		S_IDLE: o_MA_w = 270'b0;
 		S_LONE: begin
 			if(i_MA_a[counter_r] == 1'b1) o_MA_w = o_MA_r + i_MA_b;
 			else o_MA_w = o_MA_r;
@@ -115,12 +128,13 @@ end
 end*/
 
 // ===== Sequential Blocks =====
-always_ff @(posedge i_clk) begin
+always_ff @(posedge i_clk or posedge i_rst) begin
 	if(i_rst) begin
 		state_r 	<= S_IDLE;
 		o_MA_r 		<= 256'b0;
 		o_MA_end_r 	<= 1'b0;
 		counter_r 	<= 9'b0;
+		MA_start_r 	<= 1'b0;
 		//MA_a_r 		<= MA_a;
 		//MA_b_r 		<= MA_b;
 	end
@@ -129,6 +143,7 @@ always_ff @(posedge i_clk) begin
 		o_MA_r 		<= o_MA_w;
 		o_MA_end_r 	<= o_MA_end_w;
 		counter_r 	<= counter_w;
+		MA_start_r 	<= MA_start_w;
 		//MA_a_r 		<= MA_a_w;
 		//MA_b_r 		<= MA_b_w;
 	end
