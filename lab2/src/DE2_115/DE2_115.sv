@@ -145,4 +145,21 @@ DE2_115_qsys my_qsys(
 	.uart_0_external_connection_txd(UART_TXD)
 );
 
+
+// logic i_start;
+// logic [255:0] i_a, i_d, i_n;
+// logic [169:0] o_a_pow_d;
+// logic o_finished;
+
+// Rsa256Core rsa256core0(
+// 	.i_clk(CLOCK_50),
+// 	.i_rst(KEY[0]),
+// 	.i_start(i_start),
+// 	.i_a(i_a), // cipher text y
+// 	.i_d(i_d), // private key
+// 	.i_n(i_n), // divisor
+// 	.o_a_pow_d(o_a_pow_d), // plain text x
+// 	.o_finished(o_finished) // the whole process has done
+// );
+
 endmodule
