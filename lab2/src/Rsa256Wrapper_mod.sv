@@ -92,18 +92,12 @@ always_comb begin  // state_w
             if(!avm_waitrequest && avm_readdata[RX_OK_BIT]) begin
                 state_w = S_READ_KEY;
             end
-            else begin
-                state_w = state_r;
-            end
         end
 
         S_READ_KEY: begin
             if(!avm_waitrequest) begin
                 if(!NorD_r) begin
                     state_w = S_WAIT_KEY;
-                end
-                else begin
-                    state_w = state_r;
                 end
             end
             else begin 
@@ -120,14 +114,8 @@ always_comb begin  // state_w
             if(!avm_waitrequest && avm_readdata[RX_OK_BIT]) begin
                 state_w = S_READ_DATA;
             end
-            else begin
-                state_w = state_r;
-            end
             if(rst_counter_r == 28'hFFFFFFF) begin
                 state_w <= S_WAIT_KEY;
-            end
-            else begin
-                state_w = state_r;
             end
         end
 
@@ -135,9 +123,6 @@ always_comb begin  // state_w
             if(!avm_waitrequest) begin
                 if(bytes_counter_r == 7) begin
                     state_w = S_WAIT_CALCULATE;
-                end
-                else begin
-                    state_w = state_r;
                 end
             end
             else begin
@@ -147,20 +132,13 @@ always_comb begin  // state_w
 
         S_WAIT_CALCULATE: begin
             if (!avm_waitrequest && core_finished_r == 1) begin
-                stat
-                e_w = S_WAIT_SEND;
-            end
-            else begin
-                state_w = state_r;
+                state_w = S_WAIT_SEND;
             end
         end
 
         S_WAIT_SEND: begin
             if(!avm_waitrequest && avm_readdata[TX_OK_BIT]) begin
                 state_w = S_SEND_DATA;
-            end
-            else begin
-                state_w = state_r;
             end
         end
 
@@ -172,9 +150,6 @@ always_comb begin  // state_w
                 else begin
                     state_w = S_WAIT_SEND;
                 end
-            end
-            else begin
-                state_w = state_r;
             end
         end
 
@@ -189,9 +164,6 @@ always_comb begin  // StartRead, StartWrite
             StartRead(STATUS_BASE);
             if(!avm_waitrequest && avm_readdata[RX_OK_BIT]) begin
                 StartRead(RX_BASE);
-            end
-            else begin
-                DoNothing()
             end
         end
 
@@ -209,9 +181,6 @@ always_comb begin  // StartRead, StartWrite
                     end
                 end
             end
-            else begin
-                DoNothing();
-            end
         end
 
         S_WAIT_DATA: begin
@@ -219,16 +188,10 @@ always_comb begin  // StartRead, StartWrite
             if(!avm_waitrequest && avm_readdata[RX_OK_BIT]) begin
                 StartRead(RX_BASE);
             end
-            else begin
-                DoNothing()
-            end
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 avm_address_w <= STATUS_BASE;
                 avm_read_w <= 1;
                 avm_write_w <= 0;
-            end
-            else begin
-                DoNothing()
             end
         end
 
@@ -244,23 +207,14 @@ always_comb begin  // StartRead, StartWrite
                     StartRead(STATUS_BASE);
                 end
             end
-            else begin
-                DoNothing();
-            end
         end
 
         S_WAIT_CALCULATE: begin
             if (rsa_finished) begin
                 StartRead(STATUS_BASE);
             end
-            else begin
-                DoNothing()
-            end
             if (!avm_waitrequest && core_finished_r == 1) begin
                     StartRead(STATUS_BASE);
-            end
-            else begin
-                DoNothing()
             end
         end
 
@@ -269,28 +223,21 @@ always_comb begin  // StartRead, StartWrite
             if(!avm_waitrequest && avm_readdata[TX_OK_BIT]) begin
                 StartWrite(TX_BASE);
             end
-            else begin
-                DoNothing()
-            end
         end
 
         S_SEND_DATA: begin
             if(!avm_waitrequest) begin
-                // avm_write_w = 0;
-                StartRead(STATUS_BASE);
-                // if(bytes_counter_r == 15) begin
-                //     StartRead(STATUS_BASE);
-                // end
-                // else begin
-                //     StartRead(STATUS_BASE);
-                // end
-            end
-            else begin
-                DoNothing()
+                avm_write_w = 0;
+                if(bytes_counter_r == 15) begin
+                    StartRead(STATUS_BASE);
+                end
+                else begin
+                    StartRead(STATUS_BASE);
+                end
             end
         end
 
-        default: DoNothing();
+        default: DoNothing()
     endcase
 end
 
@@ -302,21 +249,12 @@ always_comb begin  // n_w
 				if(!NorD_r) begin
                     n_w[bytes_counter_r-:8] = avm_readdata[7:0];
                 end
-                else begin
-                    n_w = n_r;
-                end
-            end
-            else begin
-                n_w = n_r;
             end
         end
 
         S_WAIT_DATA: begin
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 n_w <= 0;
-            end
-            else begin
-                n_w = n_r;
             end
         end
 
@@ -328,25 +266,18 @@ always_comb begin  // NorD_w
     case(state_r)
 
         S_READ_KEY: begin   // TODO: Need else???
-            if(!avm_waitrequest && !NorD_r && bytes_counter_r == 7) begin
-                // if(!NorD_r) begin
-                //     if(bytes_counter_r == 7) begin
-                //         NorD_w = 1'b1;
-                //     end
-                // end
-                NorD_w = 1'b1;
-            end
-            else begin
-                NorD_w = NorD_r;
+            if(!avm_waitrequest) begin
+                if(!NorD_r) begin
+                    if(bytes_counter_r == 7) begin
+                        NorD_w = 1'b1;
+                    end
+                end
             end
         end
 
         S_WAIT_DATA: begin
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 NorD_w <= 0;
-            end
-            else begin
-                NorD_w = NorD_r;
             end
         end
 
@@ -367,17 +298,11 @@ always_comb begin  // d_w
                     d_w[bytes_counter_r-:8] = avm_readdata[7:0];
                 end
             end
-            else begin
-                d_w = d_r;
-            end
         end
 
         S_WAIT_DATA: begin
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 d_w <= 0;
-            end
-            else begin
-                d_w = d_r;
             end
         end
 
@@ -399,9 +324,6 @@ always_comb begin // rst_counter_w
                     end  // Need else?
                 end
             end
-            else begin
-                rst_counter_w = rst_counter_r;
-            end
         end
 
         S_WAIT_DATA: begin					 
@@ -409,20 +331,13 @@ always_comb begin // rst_counter_w
             if(rst_counter_r == 28'hFFFFFFF) begin
                 rst_counter_w <= 0; 
             end
-            else begin
-                rst_counter_w = rst_counter_r;
-            end
         end
 
         S_SEND_DATA: begin
-            if(!avm_waitrequest && bytes_counter_r == 15) begin
-                rst_counter_w = 28'b0;
-                // if(bytes_counter_r == 15) begin
-                //     rst_counter_w = 28'b0;
-                // end  // Need else?
-            end
-            else begin
-                rst_counter_w = rst_counter_r;
+            if(!avm_waitrequest) begin
+                if(bytes_counter_r == 15) begin
+                    rst_counter_w = 28'b0;
+                end  // Need else?
             end
         end
 
@@ -436,26 +351,17 @@ always_comb begin // bytes_counter_w
             if(!avm_waitrequest) begin
                 bytes_counter_w = bytes_counter_r - 8'd8;
             end
-            else begin
-                bytes_counter_w = bytes_counter_r;
-            end
         end
 
         S_WAIT_DATA: begin
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 bytes_counter_w <= 8'd255;
             end
-            else begin
-                bytes_counter_w = bytes_counter_r;
-            end
         end
 
         S_READ_DATA: begin
             if(!avm_waitrequest) begin
                 bytes_counter_w = bytes_counter_r - 8'd8;
-            end
-            else begin
-                bytes_counter_w = bytes_counter_r;
             end
         end
 
@@ -467,9 +373,6 @@ always_comb begin // bytes_counter_w
                 else begin
                     bytes_counter_w = bytes_counter_r - 8'd8;
                 end
-            end
-            else begin
-                bytes_counter_w = bytes_counter_r;
             end
         end
 
@@ -483,18 +386,12 @@ always_comb begin  // enc_w
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 enc_w <= 0;
             end
-            else begin
-                enc_w = enc_r;
-            end
         end
 
         S_READ_DATA: begin
             if(!avm_waitrequest) begin
                 enc_w[bytes_counter_r-:8] = avm_readdata[7:0];
             end  // need else??
-            else begin
-                enc_w = enc_r;
-            end
         end
 
         default: enc_w = enc_r;
@@ -507,18 +404,12 @@ always_comb begin  // dec_w
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 dec_w <= 0;
             end  // need else?
-            else begin
-                dec_w = dec_r;
-            end
         end
 
         S_WAIT_CALCULATE: begin
             if (rsa_finished) begin
                 dec_w = rsa_dec;
             end  // need else?
-            else begin
-                dec_w = dec_r;
-            end
         end
 
         S_SEND_DATA: begin
@@ -529,9 +420,6 @@ always_comb begin  // dec_w
                 else begin
                     dec_w = dec_r << 8;
                 end
-            end
-            else begin
-                dec_w = dec_r;
             end
         end
 
@@ -545,9 +433,6 @@ always_comb begin  // rsa_start_w
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 rsa_start_w <= 0;
             end
-            else begin
-                rsa_start_w = rsa_start_r;
-            end
         end
 
         S_READ_DATA: begin
@@ -555,9 +440,6 @@ always_comb begin  // rsa_start_w
                 if(bytes_counter_r == 7) begin
                     rsa_start_w = 1;
                 end
-            end
-            else begin
-                rsa_start_w = rsa_start_r;
             end
         end
 
@@ -575,23 +457,14 @@ always_comb begin  // core_finished_w
             if(rst_counter_r == 28'hFFFFFFF) begin 
                 core_finished_w <= 0;
             end
-            else begin
-                core_finished_w = core_finished_r;
-            end
         end
 
         S_WAIT_CALCULATE: begin
             if (rsa_finished) begin
                 core_finished_w = 1;
             end
-            else begin
-                core_finished_w = core_finished_r;
-            end
             if (!avm_waitrequest && core_finished_r == 1) begin
                 core_finished_w = 0;
-            end
-            else begin
-                core_finished_w = core_finished_r;
             end
         end
 
