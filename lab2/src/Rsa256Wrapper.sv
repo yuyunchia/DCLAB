@@ -39,6 +39,8 @@ logic [255:0] rsa_dec;
 
 // New defined parameter
 logic got_key_r, got_key_w;
+logic [16:0] timeout_counter_r, timeout_counter_w;  // For bonus
+logic reading_data_r, reading_data_w;
 
 assign avm_address = avm_address_r;
 assign avm_read = avm_read_r;
@@ -94,25 +96,59 @@ always_comb begin
     enc_w = enc_r;
     dec_w = dec_r;
     rsa_start_w = rsa_start_r;
+    timeout_counter_w = timeout_counter_r;
+    reading_data_w = reading_data_r;
 
     case(state_r)
         S_QUERY_RX: begin
             StartRead(STATUS_BASE);
-            if (avm_waitrequest) begin
-                state_w = S_QUERY_RX;
+            if (timeout_counter_r[15]) begin
+                if (reading_data_r) begin  // Input data is not 256 bit, switch to S_WAIT_CALC state
+                    state_w = S_WAIT_CALC;  // State change
+                    reading_data_w = 0;
+                    StartRead(STATUS_BASE);// Prepare for S_QUERY_TX state
+                    timeout_counter_w = 0;
+                    EndIO();
+                    bytes_counter_w = 0;
+                    rsa_start_w = 1;  // Start decoding
+                end
+                else begin  // Reset
+                    state_w = S_READ_KEY;  // Read the next key
+                    n_w = 0;
+                    d_w = 0;
+                    enc_w = 0;
+                    dec_w = 0;
+                    avm_address_w = STATUS_BASE;
+                    avm_read_w = 1;
+                    avm_write_w = 0;
+                    bytes_counter_w = 0;
+                    rsa_start_w = 0;
+                    got_key_w = 0;
+                    timeout_counter_w = 0;
+                    reading_data_w = 0;
+                end
             end
             else begin
-                if (avm_readdata[RX_OK_BIT]) begin
-                    StartRead(RX_BASE);  // Prepare for reading data or key
-                    if (got_key_r) begin
-                        state_w = S_READ_DATA;  // State change
-                    end
-                    else begin
-                        state_w = S_READ_KEY;  // State change
-                    end
+                if (avm_waitrequest) begin
+                    state_w = S_QUERY_RX;
+                    timeout_counter_w = timeout_counter_r + 1'b1;
                 end
                 else begin
-                    state_w = S_QUERY_RX;  // For readability
+                    if (avm_readdata[RX_OK_BIT]) begin
+                        StartRead(RX_BASE);  // Prepare for reading data or key
+                        timeout_counter_w = 0;
+                        if (got_key_r) begin
+                            state_w = S_READ_DATA;  // State change
+                            reading_data_w = 1;
+                        end
+                        else begin
+                            state_w = S_READ_KEY;  // State change
+                        end
+                    end
+                    else begin
+                        state_w = S_QUERY_RX;  // For readability
+                        timeout_counter_w = timeout_counter_r + 1'b1;
+                    end
                 end
             end
         end
@@ -163,6 +199,7 @@ always_comb begin
                     bytes_counter_w = 0;
                     rsa_start_w = 1;  // Start decoding
                     state_w = S_WAIT_CALC;  // State change
+                    reading_data_w = 0;
                 end
             end
         end
@@ -208,6 +245,8 @@ always_comb begin
                     bytes_counter_w = 0;
                     state_w = S_QUERY_RX;  // State change
                     // TODO: Decide whether to reset enc_w, dec_w
+                    enc_w = 0;
+                    dec_w = 0;
                 end
             end
         end
@@ -228,6 +267,8 @@ always_ff @(posedge avm_clk or posedge avm_rst) begin
         bytes_counter_r <= 0;
         rsa_start_r <= 0;
         got_key_r <= 0;  // New
+        timeout_counter_r <= 0;  // New
+        reading_data_r <= 0;  // New
     end else begin
         n_r <= n_w;
         d_r <= d_w;
@@ -240,6 +281,8 @@ always_ff @(posedge avm_clk or posedge avm_rst) begin
         bytes_counter_r <= bytes_counter_w;
         rsa_start_r <= rsa_start_w;
         got_key_r <= got_key_w;  // New
+        timeout_counter_r <= timeout_counter_w;  // New
+        reading_data_r <= reading_data_w;  // New
     end
 end
 
