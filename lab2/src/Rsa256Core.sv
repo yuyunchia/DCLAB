@@ -5,7 +5,7 @@ module Rsa256Core (
 	input  [255:0] i_a, // cipher text y
 	input  [255:0] i_d, // private key
 	input  [255:0] i_n, // divisor
-	output [269:0] o_a_pow_d, // plain text x
+	output [255:0] o_a_pow_d, // plain text x
 	output         o_finished // the whole process has done
 );
 
@@ -19,6 +19,8 @@ localparam S_MONT   = 3'd2;
 localparam S_BUFR 	= 3'd3;
 localparam S_CALC   = 3'd4;
 localparam S_BUF2 	= 3'd5;
+
+
 
 // ===== Output Buffers =====
 logic [269:0] o_a_pow_d_r, o_a_pow_d_w;
@@ -62,7 +64,11 @@ ModProd mp1(
 );
 
 // ===== Output Assignments ===== 
-assign o_a_pow_d = o_a_pow_d_r;
+// assign o_a_pow_d = o_a_pow_d_r;
+assign o_a_pow_d = o_a_pow_d_r[255:0];
+
+
+
 assign o_finished = o_finished_r;
 
 // ===== Combinational Circuits ===== 
