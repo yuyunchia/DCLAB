@@ -50,10 +50,13 @@ def RSA256MONT(N, y, d):
     t = MP(N, 1<<256, y, 257) # t = y << 256
     # t = MA(N, y, 1<<256) # t = y << 256
     m = 1
+    print(f"t:{hex(t)},  {t}")
     for i in range(256):
         if d%2 == 1:
             m = MA(N, m, t)
+            print(f"m:{hex(m)},  {m}")
         t = MA(N, t, t)
+        print(f"t:{hex(t)},  {t}")
         d = d>>1
         
 
@@ -69,6 +72,13 @@ k = len(bin(a))-2
 # ans2 = MA(N, a, b, k)
 y = 2
 d = 5
+
+
+
+
+N = 0xCA3586E7EA485F3B0A222A4C79F7DD12E85388ECCDEE4035940D774C029CF831
+d = 0xB6ACE0B14720169839B15FD13326CF1A1829BEAFC37BB937BEC8802FBCF46BD9
+y = 89880192937653710598380335437431847203866094229526865542213091600506423557627
 
 
 """
@@ -99,13 +109,19 @@ MA(N, a, b)  = (1731, 97, 57 ) => 1227
 # (N, y, d, a, b) = (1731, 41, 37, 97, 57)
 """
 
+# print("=====================================")
+# print(f"MP(N, a, b, k):      {MP(N, a, b, k)}")
+# print(f"MA(N, a, b<<256):    {MA(N, a, b<<256)}")
+# print(f"MA(N, a<<256, b):    {MA(N, a<<256, b)}")
+# print(f"MA(N, a, b):         {MA(N, a, b)}")
 print("=====================================")
-print(f"MP(N, a, b, k):      {MP(N, a, b, k)}")
-print(f"MA(N, a, b<<256):    {MA(N, a, b<<256)}")
-print(f"MA(N, a<<256, b):    {MA(N, a<<256, b)}")
-print(f"MA(N, a, b):         {MA(N, a, b)}")
-print("=====================================")
-print(f"EXSQ      (N={N}, y={y}, d={d}): {EXSQ(N, y, d)}")
-print(f"RSA256MONT(N={N}, y={y}, d={d}): {RSA256MONT(N, y, d)}")
+# print(f"EXSQ      (N={N}, y={y}, d={d}): {EXSQ(N, y, d)}")
+# print(f"RSA256MONT(N={N}, y={y}, d={d}): {RSA256MONT(N, y, d)}")
+
+print(hex(RSA256MONT(N, y, d)))
+
+
+# print(f"n: {int('CA3586E7EA485F3B0A222A4C79F7DD12E85388ECCDEE4035940D774C029CF831',16)}")
+# print(f"d: {int('B6ACE0B14720169839B15FD13326CF1A1829BEAFC37BB937BEC8802FBCF46BD9',16)}")
 
 

@@ -136,30 +136,108 @@ module DE2_115 (
 	inout [6:0] EX_IO
 );
 
-// please replace this module with the qsys module you generated
-// and connect all the ports
-DE2_115_qsys my_qsys(
+logic key0down, key1down, key2down, key3down;
+logic CLK_12M, CLK_100K, CLK_800K;
+
+assign AUD_XCK = CLK_12M;
+
+Altpll pll0( // generate with qsys, please follow lab2 tutorials
 	.clk_clk(CLOCK_50),
-	.rst_reset_n(KEY[0]),
-	.uart_0_external_connection_rxd(UART_RXD),
-	.uart_0_external_connection_txd(UART_TXD)
+	.reset_reset_n(key3down),
+	.altpll_12m_clk(CLK_12M),
+	.altpll_100k_clk(CLK_100K),
+	.altpll_800k_clk(CLK_800K)
 );
 
+// you can decide key down settings on your own, below is just an example
+Debounce deb0(
+	.i_in(KEY[0]), // Record/Pause
+	.i_rst_n(KEY[3]),
+	.i_clk(CLK_12M),
+	.o_neg(key0down) 
+);
 
-// logic i_start;
-// logic [255:0] i_a, i_d, i_n;
-// logic [169:0] o_a_pow_d;
-// logic o_finished;
+Debounce deb1(
+	.i_in(KEY[1]), // Play/Pause
+	.i_rst_n(KEY[3]),
+	.i_clk(CLK_12M),
+	.o_neg(key1down) 
+);
 
-// Rsa256Core rsa256core0(
-// 	.i_clk(CLOCK_50),
-// 	.i_rst(KEY[0]),
-// 	.i_start(i_start),
-// 	.i_a(i_a), // cipher text y
-// 	.i_d(i_d), // private key
-// 	.i_n(i_n), // divisor
-// 	.o_a_pow_d(o_a_pow_d), // plain text x
-// 	.o_finished(o_finished) // the whole process has done
+Debounce deb2(
+	.i_in(KEY[2]), // Stop
+	.i_rst_n(KEY[3]),
+	.i_clk(CLK_12M),
+	.o_neg(key2down) 
+);
+
+Top top0(
+	.i_rst_n(KEY[3]),
+	.i_clk(CLK_12M),
+	.i_key_0(key0down),
+	.i_key_1(key1down),
+	.i_key_2(key2down),
+	// .i_speed(SW[3:0]), // design how user can decide mode on your own
+	
+	// AudDSP and SRAM
+	.o_SRAM_ADDR(SRAM_ADDR), // [19:0]
+	.io_SRAM_DQ(SRAM_DQ), // [15:0]
+	.o_SRAM_WE_N(SRAM_WE_N),
+	.o_SRAM_CE_N(SRAM_CE_N),
+	.o_SRAM_OE_N(SRAM_OE_N),
+	.o_SRAM_LB_N(SRAM_LB_N),
+	.o_SRAM_UB_N(SRAM_UB_N),
+	
+	// I2C
+	.i_clk_100k(CLK_100K),
+	.o_I2C_SCLK(I2C_SCLK),
+	.io_I2C_SDAT(I2C_SDAT),
+	
+	// AudPlayer
+	.i_AUD_ADCDAT(AUD_ADCDAT),
+	.i_AUD_ADCLRCK(AUD_ADCLRCK),
+	.i_AUD_BCLK(AUD_BCLK),
+	.i_AUD_DACLRCK(AUD_DACLRCK),
+	.o_AUD_DACDAT(AUD_DACDAT)
+
+	// SEVENDECODER (optional display)
+	// .o_record_time(recd_time),
+	// .o_play_time(play_time),
+
+	// LCD (optional display)
+	// .i_clk_800k(CLK_800K),
+	// .o_LCD_DATA(LCD_DATA), // [7:0]
+	// .o_LCD_EN(LCD_EN),
+	// .o_LCD_RS(LCD_RS),
+	// .o_LCD_RW(LCD_RW),
+	// .o_LCD_ON(LCD_ON),
+	// .o_LCD_BLON(LCD_BLON),
+
+	// LED
+	// .o_ledg(LEDG), // [8:0]
+	// .o_ledr(LEDR) // [17:0]
+);
+
+// SevenHexDecoder seven_dec0(
+// 	.i_num(play_time),
+// 	.o_seven_ten(HEX1),
+// 	.o_seven_one(HEX0)
 // );
+
+// SevenHexDecoder seven_dec1(
+// 	.i_num(recd_time),
+// 	.o_seven_ten(HEX5),
+//  	.o_seven_one(HEX4)
+// );
+
+// comment those are use for display
+assign HEX0 = '1;
+assign HEX1 = '1;
+assign HEX2 = '1;
+assign HEX3 = '1;
+assign HEX4 = '1;
+assign HEX5 = '1;
+assign HEX6 = '1;
+assign HEX7 = '1;
 
 endmodule

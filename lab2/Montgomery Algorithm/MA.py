@@ -24,14 +24,18 @@ def MA(N, a, b): # MontAlg
     for i in range(256):
         if (a%2 == 1):
             m = m + b
+            print(f"{i} s1: {m}")
         if (m%2 == 1):
             m = m + N
+            print(f"{i} s2: {m}")
         
         m = m >> 1
+        print(f"{i} s3: {m}")
         a = a >> 1
         # print(m)
     if (m >= N):
         m = m - N
+        print(f"s4: {m}")
     return m
 
 
@@ -71,6 +75,22 @@ y = 2
 d = 5
 
 
+
+
+N = 91461769394684063230410546004684083346491234956006074818403671954991458613297
+a = 1
+b = 44397701926272518941700297619120621435221006858796662881497461855239615853906
+
+
+## 89880192937653710598380335437431847203866094229526865542213091600506423557627
+
+print("")
+print(MA(N, a, b))
+print("")
+
+
+
+
 """
 if N < t in MP , cause loop
 
@@ -99,13 +119,13 @@ MA(N, a, b)  = (1731, 97, 57 ) => 1227
 # (N, y, d, a, b) = (1731, 41, 37, 97, 57)
 """
 
-print("=====================================")
-print(f"MP(N, a, b, k):      {MP(N, a, b, k)}")
-print(f"MA(N, a, b<<256):    {MA(N, a, b<<256)}")
-print(f"MA(N, a<<256, b):    {MA(N, a<<256, b)}")
-print(f"MA(N, a, b):         {MA(N, a, b)}")
-print("=====================================")
-print(f"EXSQ      (N={N}, y={y}, d={d}): {EXSQ(N, y, d)}")
-print(f"RSA256MONT(N={N}, y={y}, d={d}): {RSA256MONT(N, y, d)}")
+# print("=====================================")
+# print(f"MP(N, a, b, k):      {MP(N, a, b, k)}")
+# print(f"MA(N, a, b<<256):    {MA(N, a, b<<256)}")
+# print(f"MA(N, a<<256, b):    {MA(N, a<<256, b)}")
+# print(f"MA(N, a, b):         {MA(N, a, b)}")
+# print("=====================================")
+# print(f"EXSQ      (N={N}, y={y}, d={d}): {EXSQ(N, y, d)}")
+# print(f"RSA256MONT(N={N}, y={y}, d={d}): {RSA256MONT(N, y, d)}")
 
 

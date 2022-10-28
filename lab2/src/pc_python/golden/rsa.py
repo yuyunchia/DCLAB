@@ -59,6 +59,7 @@ if __name__ == '__main__':
     val_e = 0x0000000000000000000000000000000000000000000000000000000000010001
     val_d = 0xB6ACE0B14720169839B15FD13326CF1A1829BEAFC37BB937BEC8802FBCF46BD9
     assert len(argv) == 2, "Usage: {} e|d".format(argv[0])
+    print("Usage: {} e|d".format(argv[0]))
     if argv[1] == 'e':
         exponentiation = val_e
         r_chunk_size = 31
@@ -72,7 +73,7 @@ if __name__ == '__main__':
         n_read = len(chunk)
         if n_read < r_chunk_size:
             if n_read != 0:
-                print "There are {} trailing bytes left (ignored).".format(n_read)
+                print ("There are {} trailing bytes left (ignored).".format(n_read))
             break
         else:
             vals = unpack("{}B".format(r_chunk_size), chunk)
@@ -101,7 +102,7 @@ if __name__ == '__main__':
 # print(f"power_naive(a={a}, b={b}, n={n}): {power_naive(a, b, n)}")   # a^b mod n
 
 
-
+# 89880192937653710598380335437431847203866094229526865542213091600506423557627
 
 
 
