@@ -138,23 +138,12 @@ module DE2_115 (
 
 // please replace this module with the qsys module you generated
 // and connect all the ports
-rsa_qsys my_qsys(
+DE2_115_qsys my_qsys(
 	.clk_clk(CLOCK_50),
-	.reset_reset_n(KEY[0]),
+	.rst_reset_n(KEY[0]),
 	.uart_0_external_connection_rxd(UART_RXD),
 	.uart_0_external_connection_txd(UART_TXD)
 );
-
-
-
-// logic [3:0] random_value;
-
-// assign random_value = 4'd
-// SevenHexDecoder seven_dec0(
-// 	.i_hex(random_value),
-// 	.o_seven_ten(HEX1),
-// 	.o_seven_one(HEX0)
-// );
 
 
 // logic i_start;
