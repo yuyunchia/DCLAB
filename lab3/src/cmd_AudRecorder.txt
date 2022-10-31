@@ -1,0 +1,38 @@
+
+ncverilog Top.sv +access+rw
+ncverilog tb_Top.sv Top.sv +access+rw
+
+
+
+ncverilog AudRecorder.sv +access+rw
+ncverilog tb_AudRecorder.sv AudRecorder.sv +access+rw
+
+
+
+
+
+
+
+===========================================================
+ncverilog tb_MA.sv MA.sv +access+rw
+
+ncverilog tb_MP.sv MP.sv +access+rw
+
+
+
+
+
+===========================================================
+ncverilog ./tb_verilog/tb.sv Rsa256Core.sv +access+rw
+
+
+
+
+
+===========================================================
+ncverilog tb.sv Rsa256Core.sv +access+r
+
+
+
+
+ncverilog +access+r test_wrapper.sv PipelineCtrl.v PipelineTb.v Rsa256Wrapper.sv Rsa256Core.sv
