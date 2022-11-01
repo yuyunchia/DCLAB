@@ -1,8 +1,15 @@
 
 ncverilog Top.sv +access+rw
-
-
 ncverilog tb_Top.sv Top.sv +access+rw
+
+
+
+ncverilog AudRecorder.sv +access+rw
+ncverilog tb_AudRecorder.sv AudRecorder.sv +access+rw
+
+
+
+
 
 
 
