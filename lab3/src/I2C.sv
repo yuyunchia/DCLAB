@@ -25,8 +25,8 @@ logic o_sclk_r, o_sclk_w;
 logic o_sdat_r, o_sdat_w;
 logic o_oen_r, o_oen_w;
 
-localparam [23:0]data[6:0] = 
-{
+localparam logic [23:0]data[6:0] = 
+'{
     24'b1000_0000_0_1001_000_0010_1100,
     24'b1001_1000_0_0001_000_0010_1100,
     24'b0100_0010_0_1110_000_0010_1100,
@@ -86,7 +86,7 @@ always_comb begin //state
 
         S_STOP: begin
             if(o_sclk_r == 1'b1 && o_sdat_r == 1'b1) begin
-                state_w = (insc_counter_r == 3'd7) ? state_r : S_STRT;
+                state_w = (insc_counter_r >= 3'd6) ? state_r : S_STRT;
             end
             else state_w = state_r;
         end
@@ -116,7 +116,8 @@ always_comb begin // insc_counter
         end
 
         S_STOP: begin
-            insc_counter_w = (o_sclk_r == 1'b1 && o_sdat_r == 1'b1) ? insc_counter_r +1 : insc_counter_r;
+            if(insc_counter_r != 3'd7) insc_counter_w = (o_sclk_r == 1'b1 && o_sdat_r == 1'b1) ? insc_counter_r +1 : insc_counter_r;
+            else insc_counter_w = insc_counter_r;
         end
         default: insc_counter_w = insc_counter_r;
     endcase
@@ -181,7 +182,7 @@ always_comb begin //o_finished
         end
 
         S_STOP: begin
-            o_finished_w = (insc_counter_r == 3'd7) ? 1'b1 : 1'b0;
+            o_finished_w = (insc_counter_r > 3'd6) ? 1'b1 : 1'b0;
         end
         default: o_finished_w = o_finished_r;
     endcase
