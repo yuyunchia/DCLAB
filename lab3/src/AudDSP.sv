@@ -39,7 +39,7 @@ always_comb begin
     state_w = state_r;
     speed_w = speed_r;
     frag_count_w = frag_count_r;
-    daclrck_delay_w = daclrck_delay_r;
+    daclrck_delay_w = i_daclrck;
     last_data_w = $signed(last_data_r);
     cur_data_w = $signed(i_sram_data);
     mid_data_w = $signed(mid_data_r);
@@ -85,17 +85,20 @@ always_comb begin
                     state_w = S_FAST;
                 end
                 else begin // slow
+                    speed_w = i_speed + 1;
                     if (i_slow_mode) begin // slow_1 mode
                         state_w = S_SLOW_1;
                         frag_w = ($signed(cur_data_r) + $signed(last_data_r)) / speed_r;
                         mid_data_w = $signed(last_data_r);
-                        frag_count_w = 1;
+                        last_data_w = $signed(cur_data_r);
+                        frag_count_w = 0;
                         sram_addr_w = sram_addr_r + 1;
                     end
                     else begin // slow_0 mode
                         state_w = S_SLOW_0;
                         mid_data_w = $signed(last_data_r);
-                        frag_count_w = 1;
+                        last_data_w = $signed(cur_data_r);
+                        frag_count_w = 0;
                         sram_addr_w = sram_addr_r + 1;
                     end
                 end
@@ -106,8 +109,8 @@ always_comb begin
                     state_w = S_SLOW_INIT;
                 end
                 else begin
-                    o_dac_data_w = $signed(mid_data_r);
                     if (~i_daclrck & daclrck_delay_r) begin // i_daclrck negedge
+                        o_dac_data_w = $signed(mid_data_r);
                         frag_count_w = frag_count_r + 1;
                     end
                 end
@@ -118,10 +121,10 @@ always_comb begin
                     state_w = S_SLOW_INIT;
                 end
                 else begin
-                    o_dac_data_w = $signed(mid_data_r);
                     if (~i_daclrck & daclrck_delay_r) begin // i_daclrck negedge
-                        frag_count_w = frag_count_r + 1;
+                        o_dac_data_w = $signed(mid_data_r);
                         mid_data_w = $signed(mid_data_w) + $signed(frag_r);
+                        frag_count_w = frag_count_r + 1;
                     end
                 end
             end
