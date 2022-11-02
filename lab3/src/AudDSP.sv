@@ -31,6 +31,9 @@ logic signed [17:0] frag_r, frag_w;
 logic [19:0] sram_addr_r, sram_addr_w;
 
 
+logic [15:0] o_dac_data_r, o_dac_data_w;
+assign o_dac_data = o_dac_data_r;
+assign o_sram_addr = sram_addr_r;
 
 always_comb begin
     state_w = state_r;
@@ -42,6 +45,7 @@ always_comb begin
     mid_data_w = $signed(mid_data_r);
     frag_w = frag_r;
     sram_addr_w = sram_addr_r;
+    o_dac_data_w = o_dac_data_r;
 
     if (i_pause) begin
         state_w = S_PAUSE;
@@ -68,7 +72,7 @@ always_comb begin
                 end
                 else begin
                     speed_w = i_speed + 1;
-                    o_dac_data = $signed(last_data_r);
+                    o_dac_data_w = $signed(last_data_r);
                     if (~i_daclrck & daclrck_delay_r) begin // i_daclrck negedge
                         last_data_w = $signed(cur_data_r);
                         sram_addr_w = sram_addr_r + speed_r;
@@ -81,7 +85,7 @@ always_comb begin
                     state_w = S_FAST;
                 end
                 else begin // slow
-                    else if (i_slow_mode) begin // slow_1 mode
+                    if (i_slow_mode) begin // slow_1 mode
                         state_w = S_SLOW_1;
                         frag_w = ($signed(cur_data_r) + $signed(last_data_r)) / speed_r;
                         mid_data_w = $signed(last_data_r);
@@ -102,7 +106,7 @@ always_comb begin
                     state_w = S_SLOW_INIT;
                 end
                 else begin
-                    dac_data = $signed(mid_data_r);
+                    o_dac_data_w = $signed(mid_data_r);
                     if (~i_daclrck & daclrck_delay_r) begin // i_daclrck negedge
                         frag_count_w = frag_count_r + 1;
                     end
@@ -114,10 +118,10 @@ always_comb begin
                     state_w = S_SLOW_INIT;
                 end
                 else begin
-                    dac_data = $signed(mid_data_r);
+                    o_dac_data_w = $signed(mid_data_r);
                     if (~i_daclrck & daclrck_delay_r) begin // i_daclrck negedge
                         frag_count_w = frag_count_r + 1;
-                        mid_data_w = $signed(mid_data_w) + $signed(frag_r)
+                        mid_data_w = $signed(mid_data_w) + $signed(frag_r);
                     end
                 end
             end
@@ -141,25 +145,29 @@ end
 
 always_ff @(posedge i_clk or posedge i_rst_n) begin
 	if (!i_rst_n) begin
-		state_r = S_IDLE;
-        speed_r = 1;
-        frag_count_r = 0;
-        daclrck_delay_r = 0;
-        last_data_r = 0;
-        cur_data_r = 0;
-        mid_data_r = 0;
-        frag_w = 0;
-        sram_addr_w = 0;
+		state_r         <= S_IDLE;
+        speed_r         <= 1;
+        frag_count_r    <= 0;
+        daclrck_delay_r <= 0;
+        last_data_r     <= 0;
+        cur_data_r      <= 0;
+        mid_data_r      <= 0;
+        frag_r          <= 0;
+        sram_addr_r     <= 0;
+        o_dac_data_r    <= 0;
 	end
 	else begin
-		state_r = state_w;
-        speed_r = speed_w;
-        frag_count_r = frag_count_w;
-        daclrck_delay_r = daclrck_delay_w;
-        last_data_r = $signed(last_data_w);
-        cur_data_r =  $signed(cur_data_w);
-        mid_data_r =  $signed(mid_data_w);
-        frag_r = frag_w;
-        sram_addr_r = sram_addr_w;
+		state_r         <= state_w;
+        speed_r         <= speed_w;
+        frag_count_r    <= frag_count_w;
+        daclrck_delay_r <= daclrck_delay_w;
+        last_data_r     <= $signed(last_data_w);
+        cur_data_r      <= $signed(cur_data_w);
+        mid_data_r      <= $signed(mid_data_w);
+        frag_r          <= frag_w;
+        sram_addr_r     <= sram_addr_w;
+        o_dac_data_r    <= o_dac_data_w;
 	end
 end
+
+endmodule

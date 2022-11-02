@@ -4,7 +4,10 @@ module Top (
 	input i_key_0, // start
 	input i_key_1, // stop
 	input i_key_2, // pause
-	// input [3:0] i_speed, // design how user can decide mode on your own
+	input [3:0] i_speed, // design how user can decide mode on your own
+
+	input i_fast_slow,
+	input i_slow_mode, // constant interpolation
 	
 	// AudDSP and SRAM
 	output [19:0] o_SRAM_ADDR,
@@ -109,19 +112,20 @@ I2cInitializer init0(
 // in other words, determine which data addr to be fetch for player 
 AudDSP dsp0(
 	.i_rst_n(i_rst_n),
-	.i_clk(),
-	.i_start(),
-	.i_pause(),
-	.i_stop(),
+	.i_clk(i_AUD_BCLK),
+	.i_start(player_start_r),
+	.i_pause(player_pause_r),
+	.i_stop(player_stop_r),
 	.i_speed(),
-	.i_fast(),
-	.i_slow_0(), // constant interpolation
-	.i_slow_1(), // linear interpolation
+	.i_fast_slow(i_fast_slow),
+	.i_slow_mode(i_slow_mode), // constant interpolation
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_play),
 	.o_dac_data(dac_data),
 	.o_sram_addr(addr_play)
 );
+
+
 
 // === AudPlayer ===
 // receive data address from DSP and fetch data to sent to WM8731 with I2S protocal
