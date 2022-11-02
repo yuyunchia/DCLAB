@@ -4,8 +4,10 @@ module Top (
 	input i_key_0,
 	input i_key_1,
 	input i_key_2,
-	// input [3:0] i_speed, // design how user can decide mode on your own
-	
+	input [3:0] i_speed, // design how user can decide mode on your own
+	input i_fast_slow, // 1 for fast 0 for slow
+	input i_slow_mode,
+
 	// AudDSP and SRAM
 	output [19:0] o_SRAM_ADDR,
 	inout  [15:0] io_SRAM_DQ,
@@ -93,10 +95,12 @@ AudDSP dsp0(
 	.i_start(),
 	.i_pause(),
 	.i_stop(),
-	.i_speed(),
-	.i_fast(),
-	.i_slow_0(), // constant interpolation
-	.i_slow_1(), // linear interpolation
+	.i_speed(i_speed),
+	.i_fast_slow(i_fast_slow),
+	.i_slow_mode(i_slow_mode),
+	// .i_fast(),
+	// .i_slow_0(), // constant interpolation
+	// .i_slow_1(), // linear interpolation
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_play),
 	.o_dac_data(dac_data),
