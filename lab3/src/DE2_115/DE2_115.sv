@@ -138,6 +138,7 @@ module DE2_115 (
 
 logic key0down, key1down, key2down, key3down;
 logic CLK_12M, CLK_100K, CLK_800K;
+logic [1:0] play_tame;
 
 assign AUD_XCK = CLK_12M;
 
@@ -204,7 +205,7 @@ Top top0(
 
 	// SEVENDECODER (optional display)
 	// .o_record_time(recd_time),
-	// .o_play_time(play_time),
+	.o_play_time(play_time),
 
 	// LCD (optional display)
 	// .i_clk_800k(CLK_800K),
@@ -220,11 +221,11 @@ Top top0(
 	// .o_ledr(LEDR) // [17:0]
 );
 
-// SevenHexDecoder seven_dec0(
-// 	.i_num(play_time),
-// 	.o_seven_ten(HEX1),
-// 	.o_seven_one(HEX0)
-// );
+SevenHexDecoder seven_dec0(
+	.i_hex(play_time),
+	.o_seven_ten(HEX1),
+	.o_seven_one(HEX0)
+);
 
 // SevenHexDecoder seven_dec1(
 // 	.i_num(recd_time),
@@ -233,8 +234,8 @@ Top top0(
 // );
 
 // comment those are use for display
-assign HEX0 = '1;
-assign HEX1 = '1;
+// assign HEX0 = '1;
+// assign HEX1 = '1;
 assign HEX2 = '1;
 assign HEX3 = '1;
 assign HEX4 = '1;

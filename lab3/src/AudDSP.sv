@@ -143,7 +143,7 @@ always_comb begin
     end
 end
 
-always_ff @(posedge i_clk or posedge i_rst_n) begin
+always_ff @(posedge i_clk or negedge i_rst_n) begin
 	if (!i_rst_n) begin
 		state_r         <= S_IDLE;
         speed_r         <= 1;
