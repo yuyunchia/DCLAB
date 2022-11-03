@@ -56,6 +56,7 @@ always_comb begin
     else begin
         case(state_r)
             S_IDLE: begin
+				sram_addr_w = 0; // yu added
                 if (i_start) begin
                     if (i_fast_slow) begin // fast
                         state_w = S_FAST;
@@ -72,9 +73,10 @@ always_comb begin
                 end
                 else begin
                     speed_w = i_speed + 1;
-                    o_dac_data_w = $signed(last_data_r);
+                    // o_dac_data_w = $signed(last_data_r);
                     if (~i_daclrck & daclrck_delay_r) begin // i_daclrck negedge
-                        last_data_w = $signed(cur_data_r);
+						o_dac_data_w = $signed(last_data_r);
+					    last_data_w = $signed(cur_data_r);
                         sram_addr_w = sram_addr_r + speed_r;
                     end
                 end
@@ -146,8 +148,8 @@ always_comb begin
     end
 end
 
-always_ff @(posedge i_clk or negedge i_rst_n) begin
-	if (!i_rst_n) begin
+always_ff @(posedge i_clk or posedge i_rst_n) begin
+	if (i_rst_n) begin
 		state_r         <= S_IDLE;
         speed_r         <= 1;
         frag_count_r    <= 0;

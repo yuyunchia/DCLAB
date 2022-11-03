@@ -1,4 +1,4 @@
-module AudRecorder(
+module AudRecorder (
     input i_rst_n, 
     input i_clk,   // i_AUD_BCLK
     input i_lrc,   // i_AUD_ADCLRCK
@@ -41,14 +41,14 @@ always_comb begin // state
     end
     S_WRITE: begin
         // if(i_start)           state_w = S_WRITE;
-        if (i_stop == 1) state_w = S_IDLE;
+        if (i_stop) state_w = S_IDLE;
         else if (pause_r == 1'd0 && pause_w == 1'd1) state_w = S_PAUSE;
         else if (address_r == 20'd1048575) state_w = S_IDLE; // SRAM full !
         else state_w = state_r;
     end
     S_PAUSE: begin
         // if(i_start)           state_w = S_WRITE;
-        if (i_stop == 1) state_w = S_IDLE;
+        if (i_stop) state_w = S_IDLE;
         else if (pause_r == 1'd0 && pause_w == 1'd1) state_w = S_WRITE;
         else state_w = state_r;
     end
@@ -80,6 +80,7 @@ always_comb begin // counter [7:0]
 end
 
 always_comb begin // data [15:0]
+    data_w = data_r; // important don't forget
     case(state_r)
     S_IDLE: data_w = 16'd0;
     S_WRITE: begin
@@ -92,9 +93,29 @@ end
 
 
 
-// ===== Sequential Circuits =====
-always_ff @(posedge i_clk or negedge i_rst_n) begin
-	if (!i_rst_n) begin
+// // ===== Sequential Circuits =====
+// always_ff @(posedge i_clk or negedge i_rst_n) begin
+// 	if (!i_rst_n) begin
+//         pause_r   <= 1'd0;
+//         lrc_r     <= 1'd0;
+//         state_r   <= S_IDLE;
+//         counter_r <= 8'd0;
+//         address_r <= 20'd0;
+//         data_r    <= 16'd0;
+// 	end
+// 	else begin
+//         pause_r   <= pause_w;
+// 		lrc_r     <= lrc_w;
+//         state_r   <= state_w;
+//         counter_r <= counter_w;
+//         address_r <= address_w;
+//         data_r    <= data_w;
+// 	end
+// end
+
+
+always_ff @(posedge i_clk or posedge i_rst_n) begin
+	if (i_rst_n) begin
         pause_r   <= 1'd0;
         lrc_r     <= 1'd0;
         state_r   <= S_IDLE;
@@ -111,6 +132,8 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
         data_r    <= data_w;
 	end
 end
+
+
 
 endmodule
 

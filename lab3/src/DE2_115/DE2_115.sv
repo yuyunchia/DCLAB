@@ -138,7 +138,8 @@ module DE2_115 (
 
 logic key0down, key1down, key2down, key3down;
 logic CLK_12M, CLK_100K, CLK_800K;
-logic [1:0] play_tame;
+
+logic [3:0] recd_time, play_time;
 
 assign AUD_XCK = CLK_12M;
 
@@ -179,8 +180,10 @@ Top top0(
 	.i_key_1(key1down),
 	.i_key_2(key2down),
 	.i_speed(SW[3:0]), // design how user can decide mode on your own
-	.i_fast_slow(SW[4]), // 1 for fast 0 for slow
-	.i_slow_mode(SW[5]),
+	.i_sw_4(SW[4]),
+	.i_sw_5(SW[5]),
+	.i_sw_6(SW[6]),
+	.i_sw_17(SW[17]),
 	
 	// AudDSP and SRAM
 	.o_SRAM_ADDR(SRAM_ADDR), // [19:0]
@@ -201,7 +204,7 @@ Top top0(
 	.i_AUD_ADCLRCK(AUD_ADCLRCK),
 	.i_AUD_BCLK(AUD_BCLK),
 	.i_AUD_DACLRCK(AUD_DACLRCK),
-	.o_AUD_DACDAT(AUD_DACDAT)
+	.o_AUD_DACDAT(AUD_DACDAT),
 
 	// SEVENDECODER (optional display)
 	// .o_record_time(recd_time),
@@ -228,7 +231,7 @@ SevenHexDecoder seven_dec0(
 );
 
 // SevenHexDecoder seven_dec1(
-// 	.i_num(recd_time),
+// 	.i_hex(recd_time),
 // 	.o_seven_ten(HEX5),
 //  	.o_seven_one(HEX4)
 // );
