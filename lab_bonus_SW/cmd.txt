@@ -1,0 +1,68 @@
+
+
+############################## Generating Testing Data
+
+Move to cpp/ 
+> cd ./lab_bonus_SW/src/cpp
+
+Compile ./cp/src/gen_data.cpp
+> source compile_gen.sh
+
+Generate testing data
+> source generate_testdata.sh
+
+
+############################## Perform SW Algorithm (c code)
+
+Move to cpp/
+> cd ./lab_bonus_SW/src/cpp
+
+Compile ./cpp/src/main.cpp
+> source compile_SW.sh
+
+Perform SW Algorithm
+> source run_SW.sh
+
+The result will be recorded in 
+- ./exe_SW.log
+
+
+
+
+
+
+
+cd ./lab_bonus_SW/src/module
+
+
+
+
+
+
+ncverilog score_matrix.sv +access+rw
+ncverilog SW_Core.sv +access+rw
+
+
+
+
+
+ncverilog tb_Top.sv Top.sv +access+rw
+
+
+
+ncverilog AudRecorder.sv +access+rw
+ncverilog tb_AudRecorder.sv AudRecorder.sv +access+rw
+
+
+
+
+
+
+
+===========================================================
+ncverilog tb_MA.sv MA.sv +access+rw
+
+ncverilog tb_MP.sv MP.sv +access+rw
+
+
+
